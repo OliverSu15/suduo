@@ -2,6 +2,7 @@
 
 #include <pthread.h>
 
+#include <cassert>
 #include <exception>
 #include <functional>
 namespace suduo {
@@ -41,8 +42,27 @@ Thread::~Thread() {
 }
 
 void Thread::start() {
+  assert(!_started);
   _started = true;
+  // TODO consider change it to shared_ptr
   auto* pfunc = new ThreadFunc(
       std::bind(suduo::_detail::run_thread_func, _func, _thread_id, _name));
-  pthread_create(&_thread_id, nullptr, &suduo::_detail::run, pfunc);
+  int err = 0;
+  if (err = pthread_create(&_thread_id, nullptr, &suduo::_detail::run, pfunc)) {
+    _started = false;
+    delete pfunc;
+    // TODO log error
+  } else {
+    // TODO assert it do create a thread
+  }
+}
+
+void Thread::join() {
+  assert(_started);
+  assert(!_joined);
+  _joined = true;
+  int err = 0;
+  if (err = pthread_join(_thread_id, nullptr)) {
+    // TODO handle error
+  }
 }

@@ -19,7 +19,7 @@ class Thread {
 
   void start();
 
-  int join();
+  void join();
 
   bool started() const { return _started; }
   pid_t tid() const { return _tid; }
