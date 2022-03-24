@@ -1,4 +1,5 @@
 set(net_SRCS
+empty.cpp
   )
 
 add_library(suduo_net ${net_SRCS})
