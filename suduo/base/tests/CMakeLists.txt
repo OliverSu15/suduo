@@ -67,8 +67,8 @@ target_link_libraries(mutex_test suduo_base)
 # add_executable(thread_bench Thread_bench.cc)
 # target_link_libraries(thread_bench suduo_base)
 
-# add_executable(thread_test Thread_test.cc)
-# target_link_libraries(thread_test suduo_base)
+add_executable(thread_test Thread_test.cpp)
+target_link_libraries(thread_test suduo_base)
 
 # add_executable(threadlocal_test ThreadLocal_test.cc)
 # target_link_libraries(threadlocal_test suduo_base)
