@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <sched.h>
 
+#include <atomic>
 #include <functional>
 #include <string>
 namespace suduo {
@@ -24,6 +25,7 @@ class Thread {
   bool started() const { return _started; }
   pid_t tid() const { return _tid; }
   const string& name() const { return _name; }
+  static int numCreated() { return numCreated_.load(); }
 
  private:
   friend void* suduo::_detail::run(void* it);
@@ -33,6 +35,9 @@ class Thread {
   pid_t _tid;
   string _name;
   ThreadFunc _func;
+  // exits only to use the muduo test more easily
+  // TODO remove
+  static std::atomic_int32_t numCreated_;
 };
 }  // namespace suduo
 #endif

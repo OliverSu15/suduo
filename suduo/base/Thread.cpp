@@ -41,13 +41,17 @@ void* run(void* it) {
 }  // namespace suduo
 using Thread = suduo::Thread;
 
+std::atomic_int32_t Thread::numCreated_;
+
 Thread::Thread(ThreadFunc func_, const string&& name)
     : _started(false),
       _joined(false),
       _thread_id(0),
       _tid(0),
       _func(std::move(func_)),
-      _name(name) {}
+      _name(name) {
+  numCreated_++;
+}
 
 Thread::~Thread() {
   if (_started && !_joined) pthread_detach(_thread_id);
