@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <cstdint>
+#include <cstdio>
 #include <string>
 namespace suduo {
 const int MICROSECOND_TO_NANOSECOND = 1000;   // na -> us
@@ -18,7 +19,11 @@ extern __thread char thread_tid_string[32];
 extern __thread int thread_tid_string_size;
 extern __thread const char* thread_name;
 
-void cache_thread_id() { thread_cache_id = gettid(); }
+inline void cache_thread_id() {
+  thread_cache_id = gettid();
+  thread_tid_string_size = std::snprintf(
+      thread_tid_string, sizeof(thread_tid_string), "%5d", thread_cache_id);
+}  // TODO 同步名字
 
 inline int tid() {
   // TODO use __builtin_expect
@@ -33,7 +38,7 @@ inline const char* threads_name() { return thread_name; }
 
 inline bool is_main_thread() { return tid() == getpid(); }
 
-void sleep_us(int64_t us) {
+inline void sleep_us(int64_t us) {
   timespec time = {0, 0};
   time.tv_sec = static_cast<time_t>(us / (SECOND_TO_MICROSECOND));
   time.tv_nsec = static_cast<long>((us % SECOND_TO_MICROSECOND) *
@@ -41,7 +46,7 @@ void sleep_us(int64_t us) {
   nanosleep(&time, nullptr);
 }
 
-void sleep_ms(int64_t ms) { sleep_us(ms * MILLISECOND_TO_MICROSECOND); }
+inline void sleep_ms(int64_t ms) { sleep_us(ms * MILLISECOND_TO_MICROSECOND); }
 
 std::string stack_trace();
 }  // namespace Current_thread_info
