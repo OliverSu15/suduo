@@ -1,6 +1,7 @@
 set(base_SRCS
 Mutex.cpp
 Thread.cpp
+CurrentThreadInfo.cpp
   )
 
 add_library(suduo_base ${base_SRCS})
@@ -10,4 +11,4 @@ install(TARGETS suduo_base DESTINATION lib)
 
 file(GLOB HEADERS "*.h")
 install(FILES ${HEADERS} DESTINATION include/suduo/base)
-#add_subdirectory(tests)
+add_subdirectory(tests)

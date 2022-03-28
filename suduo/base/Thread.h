@@ -14,7 +14,7 @@ void* run(void* it);
 class Thread {
  public:
   using ThreadFunc = std::function<void()>;
-  explicit Thread(ThreadFunc func_, const string&& name = "suduo_thread");
+  explicit Thread(ThreadFunc func_, const string&& name = "suduo");
   ~Thread();
 
   void start();
@@ -27,8 +27,8 @@ class Thread {
 
  private:
   friend void* suduo::_detail::run(void* it);
-  bool _started;
-  bool _joined;
+  bool _started = false;
+  bool _joined = false;
   pthread_t _thread_id;
   pid_t _tid;
   string _name;

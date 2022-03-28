@@ -52,8 +52,8 @@
 # add_test(NAME logstream_test COMMAND logstream_test)
 # endif()
 
-# add_executable(mutex_test Mutex_test.cc)
-# target_link_libraries(mutex_test suduo_base)
+add_executable(mutex_test Mutex_test.cpp)
+target_link_libraries(mutex_test suduo_base)
 
 # add_executable(processinfo_test ProcessInfo_test.cc)
 # target_link_libraries(processinfo_test suduo_base)
