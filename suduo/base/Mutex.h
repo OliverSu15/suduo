@@ -65,6 +65,8 @@ class MutexLock {
     return holder == Current_thread_info::tid();
   }
 
+  inline pthread_mutex_t* get_pthread_mutex() { return &mutex; }
+
  private:
   inline void set_holder() { holder = Current_thread_info::tid(); }
   inline void unset_holder() { holder = 0; }

@@ -13,6 +13,8 @@ const int MILLISECOND_TO_MICROSECOND = 1000;  // us -> ms
 const int SECOND_TO_MILLISECOND = 1000;       // ms -> s
 const int SECOND_TO_MICROSECOND =
     MILLISECOND_TO_MICROSECOND * SECOND_TO_MILLISECOND;  // us -> s
+const int SECOND_TO_NANOSECOND =
+    SECOND_TO_MICROSECOND * MICROSECOND_TO_NANOSECOND;
 namespace Current_thread_info {
 extern __thread int thread_cache_id;
 extern __thread char thread_tid_string[32];
