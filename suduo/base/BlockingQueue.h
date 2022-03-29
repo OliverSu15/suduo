@@ -11,16 +11,17 @@ template <typename T>
 class BlockingQueue {
   using queue_type = std::queue<T>;
 
+ public:
   BlockingQueue() : mutex(), not_empty(mutex) /*not sure safe*/, queue() {}
 
-  void push(const T& value) {
+  void push(T& value) {
     MutexLockGuard lock(mutex);
     queue.push(value);
     not_empty.notify();
   }
   void push(T&& value) {
     MutexLockGuard lock(mutex);
-    queue.push(value);
+    queue.push(std::move(value));
     not_empty.notify();
   }
 
@@ -47,7 +48,6 @@ class BlockingQueue {
   std::size_t size() const { return queue.size(); }
   bool empty() const { return queue.empty(); }
 
- public:
  private:
   mutable MutexLock mutex;
   Condition not_empty;

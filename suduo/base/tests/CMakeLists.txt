@@ -4,8 +4,8 @@
 # add_executable(atomic_unittest Atomic_unittest.cc)
 # add_test(NAME atomic_unittest COMMAND atomic_unittest)
 
-# add_executable(blockingqueue_test BlockingQueue_test.cc)
-# target_link_libraries(blockingqueue_test suduo_base)
+add_executable(blockingqueue_test BlockingQueue_test.cpp)
+target_link_libraries(blockingqueue_test suduo_base)
 
 # add_executable(blockingqueue_bench BlockingQueue_bench.cc)
 # target_link_libraries(blockingqueue_bench suduo_base)

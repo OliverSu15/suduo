@@ -11,7 +11,7 @@ class CountDownLatch {
 
   void wait() {
     MutexLockGuard lock(_mutex);
-    while (_count != 0) _condition.wait();
+    while (_count > 0) _condition.wait();
   }
 
   void count_down() {
@@ -20,7 +20,10 @@ class CountDownLatch {
     if (_count == 0) _condition.notifyAll();
   }
 
-  int get_count() const { return _count; }
+  int get_count() const {
+    MutexLockGuard lock(_mutex);
+    return _count;
+  }
 
  private:
   mutable MutexLock _mutex;

@@ -20,6 +20,7 @@ void run_thread_func(Func& _func, pthread_t* _thread_id, pid_t* tid,
   *tid = Current_thread_info::tid();
   tid = nullptr;
   // printf("%u run to here\n", *_thread_id);
+  suduo::Current_thread_info::thread_name = _name.c_str();
   pthread_setname_np(*_thread_id, _name.c_str());
 
   try {
