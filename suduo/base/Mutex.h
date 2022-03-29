@@ -37,6 +37,7 @@ class MutexLock {
   void lock() {
     int errnum = pthread_mutex_lock(&mutex);
     if (errnum) {
+      printf("wrong\n");
       // TODO error handle
     }
     set_holder();
@@ -45,6 +46,7 @@ class MutexLock {
   void unlock() {
     int errnum = pthread_mutex_unlock(&mutex);
     if (errnum) {
+      printf("wrong\n");
       // TODO error handle
     }
     unset_holder();

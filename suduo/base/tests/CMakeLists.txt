@@ -13,8 +13,8 @@ target_link_libraries(blockingqueue_test suduo_base)
 # add_executable(blockingqueue_bench2 BlockingQueue_bench2.cc)
 # target_link_libraries(blockingqueue_bench2 suduo_base)
 
-# add_executable(boundedblockingqueue_test BoundedBlockingQueue_test.cc)
-# target_link_libraries(boundedblockingqueue_test suduo_base)
+add_executable(boundedblockingqueue_test BoundedBlockingQueue_test.cpp)
+target_link_libraries(boundedblockingqueue_test suduo_base)
 
 # add_executable(date_unittest Date_unittest.cc)
 # target_link_libraries(date_unittest suduo_base)
@@ -86,3 +86,6 @@ target_link_libraries(thread_test suduo_base)
 # add_executable(timezone_unittest TimeZone_unittest.cc)
 # target_link_libraries(timezone_unittest suduo_base)
 # add_test(NAME timezone_unittest COMMAND timezone_unittest)
+
+add_executable(Circular_Buffer_test CircularBuffer_test.cpp)
+target_link_libraries(Circular_Buffer_test suduo_base)

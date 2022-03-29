@@ -7,7 +7,7 @@ class CountDownLatch {
  public:
   // TODO count can't smaller than 0
   explicit CountDownLatch(int count)
-      : _mutex(), _condition(_mutex), _count(count) {}
+      : _mutex(), _condition(_mutex) /*TODO not sure safe*/, _count(count) {}
 
   void wait() {
     MutexLockGuard lock(_mutex);
