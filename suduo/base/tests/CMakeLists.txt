@@ -86,3 +86,6 @@ target_link_libraries(thread_test suduo_base)
 # add_executable(timezone_unittest TimeZone_unittest.cc)
 # target_link_libraries(timezone_unittest suduo_base)
 # add_test(NAME timezone_unittest COMMAND timezone_unittest)
+
+add_executable(Circular_Buffer_test CircularBuffer_test.cpp)
+target_link_libraries(Circular_Buffer_test suduo_base)

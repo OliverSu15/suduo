@@ -18,18 +18,21 @@ class CircularBuffer {
     if (full()) return;  // TODO throw an exception ?
     buffer[end++] = val;
     if (end >= buffer.size()) end = 0;
+    _size++;
   }
 
   T pop() {
-    if (empty()) return;  // TODO throw an exception ?
+    if (empty()) throw;  // TODO throw an exception
     T val = buffer[begin++];
-    if (begin >= buffer.size()) buffer = 0;
+    if (begin >= buffer.size()) begin = 0;
+    _size--;
     return val;
   }
 
   bool full() const { return _size == buffer.size(); }
   bool empty() const { return _size == 0; }
   int size() const { return _size; }
+  int capacity() const { return buffer.size() - size(); }
 
  private:
   BufferType buffer;
