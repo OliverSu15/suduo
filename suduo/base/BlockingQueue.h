@@ -12,7 +12,7 @@ class BlockingQueue {
   using queue_type = std::queue<T>;
 
  public:
-  BlockingQueue() : mutex(), not_empty(mutex) /*not sure safe*/, queue() {}
+  BlockingQueue() : mutex(), not_empty(mutex) /*TODO not sure safe*/, queue() {}
 
   void push(T& value) {
     MutexLockGuard lock(mutex);
