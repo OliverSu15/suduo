@@ -1,6 +1,7 @@
 #ifndef BLOCKING_QUEUE_H
 #define BLOCKING_QUEUE_H
 #include <cstddef>
+#include <cstdio>
 #include <queue>
 
 #include "suduo/base/Condition.h"
@@ -14,7 +15,7 @@ class BlockingQueue {
  public:
   BlockingQueue() : mutex(), not_empty(mutex) /*TODO not sure safe*/, queue() {}
 
-  void push(T& value) {
+  void push(const T& value) {
     MutexLockGuard lock(mutex);
     queue.push(value);
     not_empty.notify();
@@ -23,6 +24,8 @@ class BlockingQueue {
     MutexLockGuard lock(mutex);
     queue.push(std::move(value));
     not_empty.notify();
+    // push_times++;
+    //  std::printf("push:%d,pop:%d\n", push_times, pop_times);
   }
 
   T pop() {
@@ -30,8 +33,10 @@ class BlockingQueue {
     while (queue.empty()) {
       not_empty.wait();
     }
-    T front = std::move(queue.front());
+    T front(std::move(queue.front()));
     queue.pop();
+    // pop_times++;
+    //  std::printf("push:%d,pop:%d\n", push_times, pop_times);
     return front;
   }
 
@@ -45,13 +50,21 @@ class BlockingQueue {
     return new_queue;
   }
 
-  std::size_t size() const { return queue.size(); }
-  bool empty() const { return queue.empty(); }
+  std::size_t size() const {
+    MutexLockGuard lock(mutex);
+    return queue.size();
+  }
+  bool empty() const {
+    MutexLockGuard lock(mutex);
+    return queue.empty();
+  }
 
  private:
   mutable MutexLock mutex;
   Condition not_empty;
   queue_type queue;
+  // int pop_times;
+  // int push_times;
 };
 
 }  // namespace suduo

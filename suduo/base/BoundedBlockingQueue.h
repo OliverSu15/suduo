@@ -1,5 +1,6 @@
 #ifndef BOUND_BLOCKING_QUEUE_H
 #define BOUND_BLOCKING_QUEUE_H
+#include <cstdio>
 #include <queue>
 
 #include "CircularBuffer.h"
@@ -7,15 +8,16 @@
 #include "suduo/base/Mutex.h"
 namespace suduo {
 template <typename T>
-class BoundBlockingQueue {
+class BoundedBlockingQueue {
   using queue_type = suduo::detail::CircularBuffer<T>;
 
  public:
-  explicit BoundBlockingQueue(int max_size)
+  explicit BoundedBlockingQueue(int max_size)
       : mutex(),
         queue(max_size),
         not_empty(mutex) /*TODO not sure safe*/,
-        not_full(mutex) /*TODO not sure safe*/ {}
+        not_full(mutex) /*TODO not sure safe*/
+  {}
 
   void push(const T& val) {
     MutexLockGuard lock(mutex);
@@ -32,6 +34,8 @@ class BoundBlockingQueue {
     }
     queue.push(std::move(val));
     not_empty.notify();
+    // push_times++;
+    // printf("%d\n", (push_times - pop_times) == queue.size());
   }
 
   T pop() {
@@ -41,6 +45,8 @@ class BoundBlockingQueue {
     }
     T val = std::move(queue.pop());
     not_full.notify();
+    // pop_times++;
+    // printf("%d\n", (push_times - pop_times) == queue.size());
     return val;
   }
 
@@ -69,6 +75,8 @@ class BoundBlockingQueue {
   queue_type queue;
   Condition not_empty;
   Condition not_full;
+  // int pop_times;
+  // int push_times;
 };
 }  // namespace suduo
 #endif
