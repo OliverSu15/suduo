@@ -40,7 +40,7 @@ target_link_libraries(boundedblockingqueue_test suduo_base)
 # add_executable(logfile_test LogFile_test.cc)
 # target_link_libraries(logfile_test suduo_base)
 
-# add_executable(logging_test Logging_test.cc)
+# add_executable(logging_test Logger_test.cpp)
 # target_link_libraries(logging_test suduo_base)
 
 add_executable(logstream_bench LogStream_bench.cpp)
@@ -88,3 +88,6 @@ target_link_libraries(thread_test suduo_base)
 
 add_executable(Circular_Buffer_test CircularBuffer_test.cpp)
 target_link_libraries(Circular_Buffer_test suduo_base)
+
+add_executable(simple_logger_test simple_logger_test.cpp)
+target_link_libraries(simple_logger_test suduo_base)

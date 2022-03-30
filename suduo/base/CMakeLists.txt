@@ -1,8 +1,10 @@
 set(base_SRCS
+Timestamp.cpp
 Mutex.cpp
 Thread.cpp
 CurrentThreadInfo.cpp
 LogStream.cpp
+Logger.cpp
   )
 
 add_library(suduo_base ${base_SRCS})
