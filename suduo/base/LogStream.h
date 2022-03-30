@@ -116,7 +116,7 @@ class LogStream {
   }
 
   self& operator<<(const void* val) {
-    int len = sprintf(_buffer.current_ptr(), "0x%X", val);
+    int len = snprintf(_buffer.current_ptr(), 42, "0x%p", val);
     _buffer.move(len);
     return *this;
   }
