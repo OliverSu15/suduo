@@ -27,10 +27,11 @@ Logger::Logger(const char* source, int line)
       _time(Timestamp::now()),
       _stream(),
       _level(INFO) {
+  _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
   _stream << _time.to_string();
-  _stream << Current_thread_info::tid_string();
-  _stream << LogLevelName[_level];
+  _stream << Current_thread_info::tid_string() << " ";
+  _stream << LogLevelName[_level] << " ";
 }
 
 Logger::Logger(const char* source, int line, LogLevel level)
@@ -41,13 +42,13 @@ Logger::Logger(const char* source, int line, LogLevel level)
       _time(Timestamp::now()) {
   _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
-  _stream << _time.to_string() << " ";
-  _stream << "tid:" << Current_thread_info::tid_string() << " ";
+  _stream << _time.to_string();
+  _stream << Current_thread_info::tid_string() << " ";
   _stream << LogLevelName[_level] << " ";
 }
 
 Logger::~Logger() {
-  _stream << " -" << _source << " " << _line << '\n';
+  _stream << " -" << _source << ":" << _line << '\n';
   //   for (int i = 0; i < _stream.buffer().size(); i++) {
   //     std::cout << *(_stream.buffer().data() + i) << std::endl;
   //   }
