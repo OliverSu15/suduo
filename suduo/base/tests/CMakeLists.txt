@@ -45,12 +45,11 @@ target_link_libraries(boundedblockingqueue_test suduo_base)
 
 # add_executable(logstream_bench LogStream_bench.cc)
 # target_link_libraries(logstream_bench suduo_base)
-
-# if(BOOSTTEST_LIBRARY)
-# add_executable(logstream_test LogStream_test.cc)
-# target_link_libraries(logstream_test suduo_base boost_unit_test_framework)
-# add_test(NAME logstream_test COMMAND logstream_test)
-# endif()
+if(BOOSTTEST_LIBRARY)
+add_executable(logstream_test LogStream_test.cpp)
+target_link_libraries(logstream_test suduo_base boost_unit_test_framework)
+add_test(NAME logstream_test COMMAND logstream_test)
+endif()
 
 add_executable(mutex_test Mutex_test.cpp)
 target_link_libraries(mutex_test suduo_base)
