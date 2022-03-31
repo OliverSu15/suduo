@@ -32,7 +32,7 @@ inline int tid() {
   if (thread_cache_id == 0) cache_thread_id();
   return thread_cache_id;
 }
-
+// TODO make it can be called alone
 inline const char* tid_string() { return thread_tid_string; }
 
 inline int tid_string_length() { return thread_tid_string_size; }

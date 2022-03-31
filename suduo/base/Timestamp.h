@@ -38,7 +38,7 @@ class Timestamp {
     char str[20];
     std::time_t tt_ = SystemClock::to_time_t(_time_point);
     std::tm* tm_ = std::localtime(&tt_);
-    std::strftime(str, 19, _time_format_string, tm_);
+    std::strftime(str, 20, _time_format_string, tm_);
     return {str};
   }
 
@@ -46,8 +46,6 @@ class Timestamp {
   TimePoint _time_point;
   static const char* const _time_format_string;
 };
-
-const char* const Timestamp::_time_format_string = "%Y-%m-%e H:M:S";
 
 // exits only to use the muduo test more easily
 // TODO remove
