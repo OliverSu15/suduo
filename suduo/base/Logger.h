@@ -22,13 +22,10 @@ class Logger {
   using OutputFunc = std::function<void(const char*, int)>;
   using FlushFunc = std::function<void()>;
 
-  void set_output_function(OutputFunc output_function) {
-    global_output = output_function;
-  }
+  static void set_output_function(OutputFunc output_function);
   // void set_flush_function(FlushFunc flush_function);
 
  private:
-  Logger::OutputFunc global_output;
   LogStream _stream;
   Timestamp _time;
   string _source;

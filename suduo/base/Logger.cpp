@@ -17,6 +17,7 @@ void default_output(const char* val, int len) {
   // TODO change later
   size_t n = std::fwrite(val, sizeof val[0], len, stdout);
 }
+Logger::OutputFunc global_output = default_output;
 }  // namespace suduo
 
 using Logger = suduo::Logger;
@@ -26,8 +27,7 @@ Logger::Logger(const char* source, int line)
       _line(line),
       _time(Timestamp::now()),
       _stream(),
-      _level(INFO),
-      global_output(suduo::default_output) {
+      _level(INFO) {
   _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
   _stream << _time.to_string();
@@ -53,9 +53,13 @@ Logger::~Logger() {
   //   for (int i = 0; i < _stream.buffer().size(); i++) {
   //     std::cout << *(_stream.buffer().data() + i) << std::endl;
   //   }
-  default_output(_stream.buffer().data(), _stream.buffer().size());
+  global_output(_stream.buffer().data(), _stream.buffer().size());
 }
 
 void Logger::operator<<(suduo::LogStream& stream) {
   _stream.append(stream.buffer().data(), stream.buffer().size());
+}
+
+void Logger::set_output_function(OutputFunc output_function) {
+  global_output = output_function;
 }
