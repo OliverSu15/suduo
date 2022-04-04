@@ -52,7 +52,7 @@ inline void sleep_ms(int64_t ms) { sleep_us(ms * MILLISECOND_TO_MICROSECOND); }
 
 inline const char* name() { return thread_name; }
 
-std::string stack_trace();
+std::string stack_trace(bool demangle);
 }  // namespace Current_thread_info
 }  // namespace suduo
 
