@@ -10,16 +10,17 @@
 #include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/LogStream.h"
 #include "suduo/base/Timestamp.h"
-
+namespace suduo {
 std::array<std::string, 6> LogLevelName = {"TRACE", "DEBUG", "INFO",
                                            "WARN",  "ERROR", "FATAL"};
-
-using Logger = suduo::Logger;
-
 void default_output(const char* val, int len) {
   // TODO change later
   size_t n = std::fwrite(val, sizeof val[0], len, stdout);
 }
+Logger::OutputFunc global_output = default_output;
+}  // namespace suduo
+
+using Logger = suduo::Logger;
 
 Logger::Logger(const char* source, int line)
     : _source(source),
@@ -52,9 +53,13 @@ Logger::~Logger() {
   //   for (int i = 0; i < _stream.buffer().size(); i++) {
   //     std::cout << *(_stream.buffer().data() + i) << std::endl;
   //   }
-  default_output(_stream.buffer().data(), _stream.buffer().size());
+  global_output(_stream.buffer().data(), _stream.buffer().size());
 }
 
 void Logger::operator<<(suduo::LogStream& stream) {
   _stream.append(stream.buffer().data(), stream.buffer().size());
+}
+
+void Logger::set_output_function(OutputFunc output_function) {
+  global_output = output_function;
 }

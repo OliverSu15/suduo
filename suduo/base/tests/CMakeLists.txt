@@ -1,5 +1,5 @@
-# add_executable(asynclogging_test AsyncLogging_test.cc)
-# target_link_libraries(asynclogging_test suduo_base)
+add_executable(asynclogging_test AsyncLogging_test.cpp)
+target_link_libraries(asynclogging_test suduo_base)
 
 # add_executable(atomic_unittest Atomic_unittest.cc)
 # add_test(NAME atomic_unittest COMMAND atomic_unittest)
