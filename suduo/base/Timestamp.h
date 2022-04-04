@@ -22,6 +22,8 @@ class Timestamp {
   explicit Timestamp(TimePoint&& new_time) : _time_point(new_time) {}
   explicit Timestamp(Duration& new_time) : _time_point(new_time) {}
   explicit Timestamp(Duration&& new_time) : _time_point(new_time) {}
+  // explicit Timestamp(time_t new_time)
+  //     : _time_point(SystemClock::from_time_t(new_time)) {}
 
   void swap(Timestamp& that) { std::swap(that._time_point, _time_point); }
 
