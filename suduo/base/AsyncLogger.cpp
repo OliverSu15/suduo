@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <utility>
 
 #include "suduo/base/LogFile.h"
@@ -31,7 +32,7 @@ void AsyncLogger::append(const char* log, size_t len) {
   if (current_buffer->availability() > len) {
     current_buffer->append(log, len);
   } else {
-    _buffer_poll.push_back(current_buffer);
+    _buffer_poll.push_back(std::move(current_buffer));
     if (next_buffer) {
       current_buffer = std::move(next_buffer);
     } else {
@@ -60,6 +61,7 @@ void AsyncLogger::thread_func() {
     _buffer_poll.push_back(std::move(current_buffer));
     current_buffer = std::move(new_buffer_1);
     buffer_to_write.swap(_buffer_poll);
+
     if (!next_buffer) {
       next_buffer = std::move(new_buffer_2);
     }

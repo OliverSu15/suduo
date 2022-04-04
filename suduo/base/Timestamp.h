@@ -44,9 +44,18 @@ class Timestamp {
     return {str};
   }
 
+  inline string to_log_string() {
+    char str[20];
+    std::time_t tt_ = SystemClock::to_time_t(_time_point);
+    std::tm* tm_ = std::localtime(&tt_);
+    std::strftime(str, 20, _log_time_format_string, tm_);
+    return {str};
+  }
+
  private:
   TimePoint _time_point;
   static const char* const _time_format_string;
+  static const char* const _log_time_format_string;
 };
 
 // exits only to use the muduo test more easily

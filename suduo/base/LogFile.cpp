@@ -1,5 +1,8 @@
 #include "LogFile.h"
 
+#include <chrono>
+#include <cstdio>
+
 #include "suduo/base/FileUtil.h"
 #include "suduo/base/Mutex.h"
 #include "suduo/base/ProcessInfo.h"
@@ -7,7 +10,7 @@
 using LogFile = suduo::LogFile;
 
 LogFile::LogFile(const std::string& base_name, int64_t roll_size,
-                 int flush_interval, bool thread_safe, int check_every_N)
+                 bool thread_safe, int flush_interval, int check_every_N)
     : _basename(base_name),
       _roll_size(roll_size),
       _flush_interval(flush_interval),
@@ -52,6 +55,7 @@ void LogFile::append_unlocked(const char* log, int len) {
       time_t thisPeriod_ = now / kRollPerSeconds_ * kRollPerSeconds_;
       if (thisPeriod_ != _start_of_period) {
         roll_file();
+
       } else if (now - _last_flush > _flush_interval) {
         _last_flush = now;
         _file->flush();
@@ -62,8 +66,10 @@ void LogFile::append_unlocked(const char* log, int len) {
 
 // TODO change later
 bool LogFile::roll_file() {
-  time_t now = 0;
+  time_t now =
+      std::chrono::system_clock::to_time_t(Timestamp::now().get_Time_Point());
   std::string filename = get_log_filename(_basename, Timestamp(now));
+
   time_t start = now / kRollPerSeconds_ * kRollPerSeconds_;
 
   if (now > _last_roll) {
@@ -80,7 +86,8 @@ std::string LogFile::get_log_filename(const std::string& basename,
                                       Timestamp now) {
   std::string filename;
   filename.reserve(basename.size() + 64);  // TODO get a much accurate one later
-  filename += now.to_string();
+  filename += basename + ".";
+  filename += now.to_log_string() + ".";
   filename += suduo::ProcessInfo::pid_string();
   filename += ".log";
   return filename;
