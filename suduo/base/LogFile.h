@@ -11,7 +11,7 @@ namespace suduo {
 class LogFile {
  public:
   LogFile(const std::string& base_name, int64_t roll_size,
-          int flush_interval = 3, bool thread_safe = true,
+          bool thread_safe = true, int flush_interval = 3,
           int check_every_N = 1024);
   ~LogFile();
 
