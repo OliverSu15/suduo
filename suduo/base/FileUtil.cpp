@@ -10,7 +10,6 @@ using FileAppender = suduo::FileUtil::FileAppender;
 
 FileAppender::FileAppender(const std::string& filename)
     : _fp(fopen(filename.c_str(), "ae")), _written_bytes(0), _buffer() {
-  printf("%s\n", filename.c_str());
   setbuf(_fp, _buffer.data());
 }
 FileAppender::FileAppender(const char* filename)

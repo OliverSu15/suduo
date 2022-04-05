@@ -1,8 +1,9 @@
+#include "suduo/base/Logger.h"
+
 #include <stdio.h>
 #include <unistd.h>
 
 #include "suduo/base/LogFile.h"
-#include "suduo/base/Logging.h"
 #include "suduo/base/ThreadPool.h"
 #include "suduo/base/TimeZone.h"
 

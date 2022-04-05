@@ -46,6 +46,10 @@ void* run(void* it) {
 }  // namespace suduo
 using Thread = suduo::Thread;
 
+// void suduo::Current_thread_info::cache_thread_id() {
+
+// }  // TODO 同步名字
+
 std::atomic_int32_t Thread::numCreated_;
 
 Thread::Thread(ThreadFunc func_, const string&& name)

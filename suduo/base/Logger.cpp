@@ -17,7 +17,10 @@ void default_output(const char* val, int len) {
   // TODO change later
   size_t n = std::fwrite(val, sizeof val[0], len, stdout);
 }
+
+void default_flush() { fflush(stdout); }
 Logger::OutputFunc global_output = default_output;
+Logger::FlushFunc global_flush = default_flush;
 }  // namespace suduo
 
 using Logger = suduo::Logger;
@@ -54,6 +57,10 @@ Logger::~Logger() {
   //     std::cout << *(_stream.buffer().data() + i) << std::endl;
   //   }
   global_output(_stream.buffer().data(), _stream.buffer().size());
+  if (_level == FATAL) {
+    global_flush();
+    abort();
+  }
 }
 
 void Logger::operator<<(suduo::LogStream& stream) {
@@ -62,4 +69,8 @@ void Logger::operator<<(suduo::LogStream& stream) {
 
 void Logger::set_output_function(OutputFunc output_function) {
   global_output = output_function;
+}
+
+void Logger::set_flush_function(FlushFunc flush_function) {
+  global_flush = flush_function;
 }

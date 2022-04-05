@@ -23,7 +23,7 @@ class Logger {
   using FlushFunc = std::function<void()>;
 
   static void set_output_function(OutputFunc output_function);
-  // void set_flush_function(FlushFunc flush_function);
+  static void set_flush_function(FlushFunc flush_function);
 
  private:
   LogStream _stream;

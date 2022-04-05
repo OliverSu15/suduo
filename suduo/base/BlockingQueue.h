@@ -10,19 +10,18 @@ namespace suduo {
 
 template <typename T>
 class BlockingQueue {
-  using queue_type = std::queue<T>;
-
  public:
+  using queue_type = std::deque<T>;
   BlockingQueue() : mutex(), not_empty(mutex) /*TODO not sure safe*/, queue() {}
 
   void push(const T& value) {
     MutexLockGuard lock(mutex);
-    queue.push(value);
+    queue.push_back(value);
     not_empty.notify();
   }
   void push(T&& value) {
     MutexLockGuard lock(mutex);
-    queue.push(std::move(value));
+    queue.push_back(std::move(value));
     not_empty.notify();
     // push_times++;
     //  std::printf("push:%d,pop:%d\n", push_times, pop_times);
@@ -34,7 +33,7 @@ class BlockingQueue {
       not_empty.wait();
     }
     T front(std::move(queue.front()));
-    queue.pop();
+    queue.pop_front();
     // pop_times++;
     //  std::printf("push:%d,pop:%d\n", push_times, pop_times);
     return front;

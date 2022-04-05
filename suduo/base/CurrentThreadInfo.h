@@ -1,6 +1,7 @@
 #ifndef CURRENT_THREAD_INFO_H
 #define CURRENT_THREAD_INFO_H
 #include <bits/types/struct_timespec.h>
+#include <sys/syscall.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -20,16 +21,15 @@ extern __thread int thread_cache_id;
 extern __thread char thread_tid_string[32];
 extern __thread int thread_tid_string_size;
 extern __thread const char* thread_name;
-
 inline void cache_thread_id() {
   thread_cache_id = gettid();
   thread_tid_string_size = std::snprintf(
       thread_tid_string, sizeof(thread_tid_string), "%5d", thread_cache_id);
-}  // TODO 同步名字
-
+}
 inline int tid() {
   // TODO use __builtin_expect
-  if (thread_cache_id == 0) cache_thread_id();
+  // TODO current cache ability don't work, try to find a new one
+  /*if (thread_cache_id == 0) */ cache_thread_id();
   return thread_cache_id;
 }
 // TODO make it can be called alone

@@ -36,7 +36,7 @@ class Timestamp {
 
   // TODO 更改变量名甚至是实现
   //实现的并不好
-  string to_string() {
+  inline string to_string() const {
     char str[20];
     std::time_t tt_ = SystemClock::to_time_t(_time_point);
     std::tm* tm_ = std::localtime(&tt_);
@@ -50,6 +50,14 @@ class Timestamp {
     std::tm* tm_ = std::localtime(&tt_);
     std::strftime(str, 20, _log_time_format_string, tm_);
     return {str};
+  }
+  // TODO may delete later
+  inline bool valid() const {
+    return _time_point.time_since_epoch().count() != 0;
+  }
+  static Timestamp invalid() { return Timestamp(); }
+  int64_t microSecondsSinceEpoch() {
+    return _time_point.time_since_epoch().count();
   }
 
  private:
