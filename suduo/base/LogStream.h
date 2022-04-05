@@ -141,6 +141,10 @@ class LogStream {
     _buffer.append(val);
     return *this;
   }
+  self& operator<<(const std::string& val) {
+    _buffer.append(val);
+    return *this;
+  }
   self& operator<<(Buffer val) {
     *this << val.data();
     return *this;

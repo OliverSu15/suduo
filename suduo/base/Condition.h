@@ -41,6 +41,7 @@ class Condition {
   }
 
   void wait() {
+    MutexLock::UnassignGuard ug(mutex);
     int errnum = pthread_cond_wait(&cond, mutex.get_pthread_mutex());
     if (errnum) {
       // TODO handle error
@@ -51,6 +52,7 @@ class Condition {
     timespec time = {0, 0};
     time.tv_sec = static_cast<time_t>(wait_time.count() / SECOND_TO_NANOSECOND);
     time.tv_nsec = static_cast<long>(wait_time.count() % SECOND_TO_NANOSECOND);
+    MutexLock::UnassignGuard ug(mutex);
     int errnum =
         pthread_cond_timedwait(&cond, mutex.get_pthread_mutex(), &time);
     if (errnum) {

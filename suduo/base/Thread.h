@@ -6,6 +6,8 @@
 #include <atomic>
 #include <functional>
 #include <string>
+
+#include "suduo/base/CountDownLatch.h"
 namespace suduo {
 using string = std::string;
 namespace _detail {
@@ -35,6 +37,7 @@ class Thread {
   pid_t _tid;
   string _name;
   ThreadFunc _func;
+  CountDownLatch _latch;
   // exits only to use the muduo test more easily
   // TODO remove
   static std::atomic_int32_t numCreated_;
