@@ -1,5 +1,6 @@
-#ifndef THREAD_POLL_H
-#define THREAD_POLL_H
+#ifndef THREAD_POOL_H
+#define THREAD_POOL_H
+#include <atomic>
 #include <cstddef>
 #include <deque>
 #include <functional>
@@ -11,17 +12,17 @@
 #include "suduo/base/Mutex.h"
 #include "suduo/base/Thread.h"
 namespace suduo {
-class ThreadPoll {
+class ThreadPool {
  public:
   using Task = std::function<void()>;
 
-  ThreadPoll(const std::string& name = "ThreadPoll");
-  ~ThreadPoll();
+  ThreadPool(const std::string& name = "ThreadPool");
+  ~ThreadPool();
 
   void start(int threads_num);
   void stop();
 
-  void run(Task& task);
+  void run(Task task);
   // call before call start()
   void set_max_queue_size(int size) { max_queue_size = size; }
   void set_thread_init_func(Task& task) { thread_init_task = task; }
@@ -30,7 +31,7 @@ class ThreadPoll {
 
  private:
   void thread_func();
-  ThreadPoll::Task get_next_task();
+  ThreadPool::Task get_next_task();
   bool is_full() const;
 
   mutable MutexLock _mutex;
@@ -40,12 +41,12 @@ class ThreadPoll {
   std::string _name;
 
   Task thread_init_task;
-  std::vector<std::unique_ptr<Thread>> thread_poll;
+  std::vector<std::unique_ptr<Thread>> thread_pool;
 
   std::deque<Task> task_queue;
   size_t max_queue_size;
 
-  bool running;
+  std::atomic_bool running;
 };
 }  // namespace suduo
 #endif

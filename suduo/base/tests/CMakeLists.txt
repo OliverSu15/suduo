@@ -75,8 +75,8 @@ target_link_libraries(thread_test suduo_base)
 # add_executable(threadlocalsingleton_test ThreadLocalSingleton_test.cc)
 # target_link_libraries(threadlocalsingleton_test suduo_base)
 
-# add_executable(threadpool_test ThreadPool_test.cc)
-# target_link_libraries(threadpool_test suduo_base)
+add_executable(threadpool_test ThreadPool_test.cpp)
+target_link_libraries(threadpool_test suduo_base)
 
 # add_executable(timestamp_unittest Timestamp_unittest.cc)
 # target_link_libraries(timestamp_unittest suduo_base)

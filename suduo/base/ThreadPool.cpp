@@ -1,89 +1,99 @@
-#include "ThreadPoll.h"
+#include "ThreadPool.h"
 
 #include <cstddef>
+#include <cstdio>
 #include <functional>
+#include <iostream>
+#include <ostream>
 #include <string>
 
+#include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Mutex.h"
 #include "suduo/base/Thread.h"
-using ThreadPoll = suduo::ThreadPoll;
+using ThreadPool = suduo::ThreadPool;
 
-ThreadPoll::ThreadPoll(const std::string& name)
+ThreadPool::ThreadPool(const std::string& name)
     : _mutex(),
       not_full(_mutex),
       not_empty(_mutex), /*both are not sure is safe*/
       _name(name),
-      thread_init_task(),
       max_queue_size(0),
       running(false) {}
-ThreadPoll::~ThreadPoll() {
+ThreadPool::~ThreadPool() {
   if (running) {
     stop();
   }
 }
 
-void ThreadPoll::start(int threads_num) {
+void ThreadPool::start(int threads_num) {
   running = true;
-  thread_poll.reserve(threads_num);
+  thread_pool.reserve(threads_num);
   for (int i = 0; i < threads_num; i++) {
+    char id[32];
+    snprintf(id, sizeof id, "%d", i + 1);
     // std::string thrad_name = "Thread" + std::to_string(i);
-    thread_poll.emplace_back(
-        new suduo::Thread(std::bind(&ThreadPoll::thread_func, this),
-                          "Thread" + std::to_string(i)));
-    thread_poll[i]->start();
+    thread_pool.emplace_back(new suduo::Thread(
+        std::bind(&ThreadPool::thread_func, this), _name + id));
+    thread_pool[i]->start();
   }
 }
 
-void ThreadPoll::stop() {
-  MutexLockGuard lock(_mutex);
-  running = false;
-  not_full.notifyAll();
-  not_empty.notifyAll();
-  for (auto& i : thread_poll) i->join();
+void ThreadPool::stop() {
+  {
+    MutexLockGuard lock(_mutex);
+    running = false;
+    not_empty.notifyAll();
+    not_full.notifyAll();
+  }
+  for (auto& i : thread_pool) {
+    i->join();
+  }
 }
 
-void ThreadPoll::run(Task& task) {
-  if (thread_poll.empty()) {
+void ThreadPool::run(Task task) {
+  if (thread_pool.empty()) {
     task();
   } else {
     MutexLockGuard lock(_mutex);
     while (is_full() && running) {
       not_full.wait();
     }
+
     if (!running) return;
-    task_queue.push_back(task);
+    task_queue.push_back(std::move(task));
     not_empty.notify();
   }
 }
 
-size_t ThreadPoll::queue_size() const {
+size_t ThreadPool::queue_size() const {
   suduo::MutexLockGuard lock(_mutex);
   return task_queue.size();
 }
 
-ThreadPoll::Task ThreadPoll::get_next_task() {
+ThreadPool::Task ThreadPool::get_next_task() {
   MutexLockGuard lock(_mutex);
   while (task_queue.empty() && running) {
     not_empty.wait();
   }
-  // if(!running) return;
+  // if (!running) return;
   Task task;
   if (!task_queue.empty()) {
     task = task_queue.front();
     task_queue.pop_front();
     if (max_queue_size > 0) {
-      not_empty.notify();
+      not_full.notify();
     }
   }
 
   return task;
 }
 
-bool ThreadPoll::is_full() const {
-  return max_queue_size > 0 && queue_size() >= max_queue_size;
+bool ThreadPool::is_full() const {
+  assert(_mutex.isLockedByThisThread());
+  return max_queue_size > 0 && task_queue.size() >= max_queue_size;
 }
 
-void ThreadPoll::thread_func() {
+void ThreadPool::thread_func() {
   try {
     if (thread_init_task) thread_init_task();
     while (running) {
@@ -92,6 +102,7 @@ void ThreadPoll::thread_func() {
         task();
       }
     }
+
   } catch (const std::exception& e) {
     // TODO LOG exception info
   } catch (...) {

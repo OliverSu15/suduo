@@ -7,6 +7,7 @@
 #include <mutex>
 
 #include "CurrentThreadInfo.h"
+#include "iostream"
 // only exist for muduo test
 // TODO remove
 #define MCHECK(ret)                                               \
@@ -70,6 +71,19 @@ class MutexLock {
   inline pthread_mutex_t* get_pthread_mutex() { return &mutex; }
 
  private:
+  // TODO may delete later
+  friend class Condition;
+  class UnassignGuard {
+   public:
+    explicit UnassignGuard(MutexLock& mutex) : _mutex(mutex) {
+      _mutex.unset_holder();
+    }
+    ~UnassignGuard() { _mutex.set_holder(); }
+
+   private:
+    MutexLock& _mutex;
+  };
+
   inline void set_holder() { holder = Current_thread_info::tid(); }
   inline void unset_holder() { holder = 0; }
 
