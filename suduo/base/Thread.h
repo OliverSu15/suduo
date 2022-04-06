@@ -8,13 +8,14 @@
 #include <string>
 
 #include "suduo/base/CountDownLatch.h"
+#include "suduo/base/noncopyable.h"
 namespace suduo {
 using string = std::string;
 namespace _detail {
 void* run(void* it);
 }
 
-class Thread {
+class Thread : noncopyable {
  public:
   using ThreadFunc = std::function<void()>;
   explicit Thread(ThreadFunc func_, const string&& name = "suduo");

@@ -2,8 +2,9 @@
 #define COUNTDOWNLATCH_H
 #include "suduo/base/Condition.h"
 #include "suduo/base/Mutex.h"
+#include "suduo/base/noncopyable.h"
 namespace suduo {
-class CountDownLatch {
+class CountDownLatch : noncopyable {
  public:
   // TODO count can't smaller than 0
   explicit CountDownLatch(int count)

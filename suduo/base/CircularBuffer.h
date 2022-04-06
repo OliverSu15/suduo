@@ -2,10 +2,12 @@
 #define BLOCKING_QUEUE_H
 
 #include <vector>
+
+#include "suduo/base/noncopyable.h"
 namespace suduo {
 namespace detail {
 template <typename T>
-class CircularBuffer {
+class CircularBuffer : noncopyable {
   using BufferType = std::vector<T>;
 
  public:

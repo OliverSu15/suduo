@@ -12,8 +12,9 @@
 #include "suduo/base/LogStream.h"
 #include "suduo/base/Mutex.h"
 #include "suduo/base/Thread.h"
+#include "suduo/base/noncopyable.h"
 namespace suduo {
-class AsyncLogger {
+class AsyncLogger : noncopyable {
  public:
   AsyncLogger(const std::string& filename, int64_t roll_size,
               int flush_interval = 3);

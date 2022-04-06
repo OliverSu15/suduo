@@ -8,6 +8,7 @@
 
 #include "CurrentThreadInfo.h"
 #include "iostream"
+#include "suduo/base/noncopyable.h"
 // only exist for muduo test
 // TODO remove
 #define MCHECK(ret)                                               \
@@ -18,7 +19,7 @@
   })
 namespace suduo {
 // TODO can't copy can't move
-class MutexLock {
+class MutexLock : noncopyable {
  public:
   MutexLock() : holder(0) {
     int errnum = pthread_mutex_init(&mutex, nullptr);

@@ -6,9 +6,10 @@
 #include "suduo/base/FileUtil.h"
 #include "suduo/base/Mutex.h"
 #include "suduo/base/Timestamp.h"
+#include "suduo/base/noncopyable.h"
 namespace suduo {
 // TODO change later
-class LogFile {
+class LogFile : noncopyable {
  public:
   LogFile(const std::string& base_name, int64_t roll_size,
           bool thread_safe = true, int flush_interval = 3,

@@ -12,7 +12,7 @@
 #include "suduo/base/Mutex.h"
 #include "suduo/base/Thread.h"
 namespace suduo {
-class ThreadPool {
+class ThreadPool : noncopyable {
  public:
   using Task = std::function<void()>;
 

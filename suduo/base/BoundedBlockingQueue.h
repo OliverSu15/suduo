@@ -6,9 +6,10 @@
 #include "CircularBuffer.h"
 #include "suduo/base/Condition.h"
 #include "suduo/base/Mutex.h"
+#include "suduo/base/noncopyable.h"
 namespace suduo {
 template <typename T>
-class BoundedBlockingQueue {
+class BoundedBlockingQueue : noncopyable {
   using queue_type = suduo::detail::CircularBuffer<T>;
 
  public:

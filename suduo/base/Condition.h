@@ -9,8 +9,9 @@
 
 #include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Mutex.h"
+#include "suduo/base/noncopyable.h"
 namespace suduo {
-class Condition {
+class Condition : noncopyable {
  public:
   explicit Condition(MutexLock& mutex_lock) : mutex(mutex_lock) {
     int errnum = pthread_cond_init(&cond, nullptr);

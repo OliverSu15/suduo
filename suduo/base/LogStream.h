@@ -9,11 +9,12 @@
 #include <system_error>
 
 #include "suduo/base/Thread.h"
+#include "suduo/base/noncopyable.h"
 namespace suduo {
 const int MIN_BUFFER_SIZE = 4000;
 const int MAX_BUFFER_SIZE = 4000 * 1000;
 template <int SIZE>
-class StreamBuffer {
+class StreamBuffer : noncopyable {
   using BufferType = std::array<char, SIZE>;
 
  public:
@@ -52,7 +53,7 @@ class StreamBuffer {
   char* _current;
 };
 
-class LogStream {
+class LogStream : noncopyable {
  public:
   using Buffer = suduo::StreamBuffer<MIN_BUFFER_SIZE>;
   using self = suduo::LogStream;

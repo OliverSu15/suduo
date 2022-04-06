@@ -6,10 +6,11 @@
 
 #include "suduo/base/Condition.h"
 #include "suduo/base/Mutex.h"
+#include "suduo/base/noncopyable.h"
 namespace suduo {
 
 template <typename T>
-class BlockingQueue {
+class BlockingQueue : noncopyable {
  public:
   using queue_type = std::deque<T>;
   BlockingQueue() : mutex(), not_empty(mutex) /*TODO not sure safe*/, queue() {}

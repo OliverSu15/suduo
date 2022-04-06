@@ -5,9 +5,11 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+
+#include "suduo/base/noncopyable.h"
 namespace suduo {
 namespace FileUtil {
-class FileAppender {
+class FileAppender : noncopyable {
  public:
   explicit FileAppender(const std::string& filename);
   explicit FileAppender(const char* filename);
