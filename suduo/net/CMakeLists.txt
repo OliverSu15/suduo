@@ -1,7 +1,7 @@
-set(net_SRCS
-empty.cpp
-  )
-
+# set(net_SRCS
+# empty.cpp
+#   )
+file(GLOB net_SRCS "*.cpp")
 add_library(suduo_net ${net_SRCS})
 target_link_libraries(suduo_net suduo_base)
 
