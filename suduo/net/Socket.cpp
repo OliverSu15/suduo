@@ -42,16 +42,16 @@ bool Socket::get_Tcp_info_string(char *buf, int len) const {
 }
 
 void Socket::bind_address(const InetAddress &local_addr) {
-  sockets::bind_or_abort(_sock_fd, local_addr);
+  sockets::bind_or_abort(_sock_fd, local_addr.get_sock_addr());
 }
 
 void Socket::listen() { sockets::listen_or_abort(_sock_fd); }
 
 int Socket::accept(InetAddress *peer_addr) {
   sockaddr_in6 addr;
-  int connfd = sockets::accept(_sock_fd, addr);
+  int connfd = sockets::accept(_sock_fd, &addr);
   if (connfd >= 0) {
-    peer_addr.;
+    peer_addr->set_sock_addr_inet6(addr);
   }
   return connfd;
 }
@@ -76,7 +76,8 @@ void Socket::set_reuse_port(bool on) {
       setsockopt(_sock_fd, SOL_SOCKET, SO_REUSEPORT, &opt_val, sizeof(opt_val));
   // TODO check
   if (ret < 0 && on) {
-    LOG_FATAL << "SO_REUSEPORT failed.";
+    // TODO handle error
+    //  uduo::LOG_FATAL << "SO_REUSEPORT failed.";
   }
 }
 
