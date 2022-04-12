@@ -7,6 +7,8 @@
 #include <ctime>
 #include <string>
 #include <type_traits>
+
+#include "suduo/base/CurrentThreadInfo.h"
 namespace suduo {
 class Timestamp {
   using SystemClock = std::chrono::system_clock;
@@ -72,5 +74,10 @@ inline double timeDifference(Timestamp high, Timestamp low) {
   auto diff = high.get_Time_Point() - low.get_Time_Point();
   return diff.count();  // nanosecond
 }
+inline Timestamp addTime(Timestamp timestamp, double seconds) {
+  int64_t delta = static_cast<int64_t>(seconds * SECOND_TO_NANOSECOND);
+  return Timestamp(timestamp.microSecondsSinceEpoch() + delta);
+}
+
 }  // namespace suduo
 #endif
