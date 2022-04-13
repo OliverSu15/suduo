@@ -11,7 +11,7 @@
 #include "suduo/base/noncopyable.h"
 namespace suduo {
 namespace net {
-class InetAddress : noncopyable {
+class InetAddress {
  public:
   explicit InetAddress(uint16_t port, bool loop_back_only = false,
                        bool ipv6 = false);
