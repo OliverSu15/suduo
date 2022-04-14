@@ -21,6 +21,10 @@ using HighWaterMarkCallback =
 // the data has been read to (buf, len)
 using MessageCallback =
     std::function<void(const TcpConnectionPtr&, Buffer*, Timestamp)>;
+
+void defaultConnectionCallback(const TcpConnectionPtr& conn);
+void defaultMessageCallback(const TcpConnectionPtr& conn, Buffer* buffer,
+                            Timestamp receiveTime);
 }  // namespace net
 }  // namespace suduo
 #endif
