@@ -7,8 +7,8 @@ target_link_libraries(echoserver_unittest suduo_net)
 add_executable(echoclient_unittest EchoClient_unittest.cpp)
 target_link_libraries(echoclient_unittest suduo_net)
 
-# add_executable(eventloop_unittest EventLoop_unittest.cc)
-# target_link_libraries(eventloop_unittest suduo_net)
+add_executable(eventloop_unittest EventLoop_unittest.cpp)
+target_link_libraries(eventloop_unittest suduo_net)
 
 # add_executable(eventloopthread_unittest EventLoopThread_unittest.cc)
 # target_link_libraries(eventloopthread_unittest suduo_net)
