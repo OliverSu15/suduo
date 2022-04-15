@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(testBufferShrink) {
   BOOST_CHECK_EQUAL(buf.writeadble_bytes(), 0);
   BOOST_CHECK_EQUAL(buf.pre_append_bytes(), Buffer::pre_append_size + 1500);
 
-  buf.shrink();
+  buf.shrink(0);
   BOOST_CHECK_EQUAL(buf.readable_bytes(), 500);
   BOOST_CHECK_EQUAL(buf.writeadble_bytes(), Buffer::init_size - 500);
   BOOST_CHECK_EQUAL(buf.retrieve_all_as_string(), string(500, 'y'));
@@ -125,9 +125,9 @@ BOOST_AUTO_TEST_CASE(testBufferReadInt) {
   BOOST_CHECK_EQUAL(top16, 'H' * 256 + 'T');
   BOOST_CHECK_EQUAL(buf.peek_int_32(), top16 * 65536 + 'T' * 256 + 'P');
 
-  BOOST_CHECK_EQUAL(buf.peek_int_8(), 'H');
-  BOOST_CHECK_EQUAL(buf.peek_int_16(), 'T' * 256 + 'T');
-  BOOST_CHECK_EQUAL(buf.peek_int_8(), 'P');
+  BOOST_CHECK_EQUAL(buf.read_int_8(), 'H');
+  BOOST_CHECK_EQUAL(buf.read_int_16(), 'T' * 256 + 'T');
+  BOOST_CHECK_EQUAL(buf.read_int_8(), 'P');
   BOOST_CHECK_EQUAL(buf.readable_bytes(), 0);
   BOOST_CHECK_EQUAL(buf.writeadble_bytes(), Buffer::init_size);
 
@@ -135,9 +135,9 @@ BOOST_AUTO_TEST_CASE(testBufferReadInt) {
   buf.append_int_16(-2);
   buf.append_int_32(-3);
   BOOST_CHECK_EQUAL(buf.readable_bytes(), 7);
-  BOOST_CHECK_EQUAL(buf.peek_int_8(), -1);
-  BOOST_CHECK_EQUAL(buf.peek_int_16(), -2);
-  BOOST_CHECK_EQUAL(buf.peek_int_32(), -3);
+  BOOST_CHECK_EQUAL(buf.read_int_8(), -1);
+  BOOST_CHECK_EQUAL(buf.read_int_16(), -2);
+  BOOST_CHECK_EQUAL(buf.read_int_32(), -3);
 }
 
 BOOST_AUTO_TEST_CASE(testBufferFindEOL) {
