@@ -95,7 +95,7 @@ Logger::~Logger() {
 void Logger::operator<<(suduo::LogStream& stream) {
   _stream.append(stream.buffer().data(), stream.buffer().size());
 }
-
+void Logger::set_log_level(Logger::LogLevel level) { g_logLevel = level; }
 void Logger::set_output_function(OutputFunc output_function) {
   global_output = output_function;
 }

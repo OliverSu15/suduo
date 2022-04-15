@@ -26,7 +26,7 @@ class Logger {
 
   static void set_output_function(OutputFunc output_function);
   static void set_flush_function(FlushFunc flush_function);
-
+  static void set_log_level(Logger::LogLevel level);
   static LogLevel log_level();
 
  private:
