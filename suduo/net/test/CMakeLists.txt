@@ -42,7 +42,7 @@ target_link_libraries(tcpclient_reg2 suduo_net)
 add_executable(tcpclient_reg3 TcpClient_reg3.cpp)
 target_link_libraries(tcpclient_reg3 suduo_net)
 
-# add_executable(timerqueue_unittest TimerQueue_unittest.cc)
-# target_link_libraries(timerqueue_unittest suduo_net)
-# add_test(NAME timerqueue_unittest COMMAND timerqueue_unittest)
+add_executable(timerqueue_unittest TimerQueue_unittest.cpp)
+target_link_libraries(timerqueue_unittest suduo_net)
+add_test(NAME timerqueue_unittest COMMAND timerqueue_unittest)
 
