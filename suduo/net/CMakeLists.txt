@@ -41,6 +41,6 @@ set(HEADERS
   )
 install(FILES ${HEADERS} DESTINATION include/suduo/net)
 # if(MUDUO_BUILD_EXAMPLES)
-#   add_subdirectory(tests)
+add_subdirectory(test)
 # endif()
 #add_subdirectory(tests)
