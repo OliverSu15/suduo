@@ -6,9 +6,9 @@
 #include <utility>
 
 #include "suduo/base/noncopyable.h"
-#include "suduo/net/InetAddress.h"
 namespace suduo {
 namespace net {
+class InetAddress;
 class Socket : noncopyable {
  public:
   explicit Socket(int sock_fd) : _sock_fd(sock_fd) {}

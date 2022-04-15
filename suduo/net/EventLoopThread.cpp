@@ -1,11 +1,11 @@
-#include "EventLoopThread.h"
+
+
+#include "suduo/net/EventLoopThread.h"
 
 #include <memory>
 
-#include "suduo/base/Condition.h"
-#include "suduo/base/Mutex.h"
-#include "suduo/base/Thread.h"
-#include "suduo/net/Channel.h"
+#include "suduo/net/EventLoop.h"
+using namespace suduo::net;
 using EventLoopThread = suduo::net::EventLoopThread;
 
 EventLoopThread::EventLoopThread(const ThreadInitCallback& cb,

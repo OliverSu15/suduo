@@ -1,21 +1,13 @@
 #include "TimerQueue.h"
 
-#include <bits/types/struct_itimerspec.h>
-#include <bits/types/struct_timespec.h>
-#include <bits/types/time_t.h>
 #include <sys/timerfd.h>
-#include <sys/types.h>
 #include <unistd.h>
 
-#include <cmath>
-#include <cstdint>
-#include <vector>
-
-#include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Logger.h"
-#include "suduo/base/Timestamp.h"
+#include "suduo/net/EventLoop.h"
 #include "suduo/net/Timer.h"
 #include "suduo/net/TimerId.h"
+using namespace suduo;
 namespace suduo {
 namespace net {
 namespace detail {
@@ -53,8 +45,8 @@ void read_timer_fd(int timer_fd, Timestamp now) {
 void reset_timer_fd(int timer_fd, Timestamp expiration) {
   itimerspec new_value;
   itimerspec old_value;
-  memZero(&new_value, sizeof new_value);
-  memZero(&old_value, sizeof old_value);
+  // memZero(&new_value, sizeof new_value);
+  // memZero(&old_value, sizeof old_value);
   new_value.it_value = how_much_time_from_now(expiration);
   int ret = ::timerfd_settime(timer_fd, 0, &new_value, &old_value);
   if (ret) {
@@ -91,7 +83,7 @@ TimerQueue::~TimerQueue() {
 suduo::net::TimerID TimerQueue::add_timer(TimerCallback cb, Timestamp when,
                                           double interval) {
   Timer* timer = new Timer(std::move(cb), when, interval);
-  _loop.run_in_loop(std::bind(&TimerQueue::add_timer_in_loop, this, timer));
+  _loop->run_in_loop(std::bind(&TimerQueue::add_timer_in_loop, this, timer));
   return TimerID(timer, timer->sequence());
 }
 void TimerQueue::cancel(TimerID timer_id) {
@@ -124,7 +116,7 @@ void TimerQueue::cancel_in_loop(TimerID timer_id) {
 }
 
 void TimerQueue::handle_read() {
-  loop_->assertInLoopThread();
+  _loop->assert_in_loop_thread();
   Timestamp now(Timestamp::now());
   read_timer_fd(_timer_fd, now);
 
@@ -181,7 +173,7 @@ void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now) {
 }
 
 bool TimerQueue::insert(Timer* timer) {
-  _loop->assertInLoopThread();
+  _loop->assert_in_loop_thread();
   assert(_timers.size() == _active_timers.size());
   bool earliestChanged = false;
   Timestamp when = timer->expertion_time();

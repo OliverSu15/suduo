@@ -1,20 +1,18 @@
 #include "TcpConnection.h"
 
-#include <asm-generic/errno.h>
-#include <sys/types.h>
-#include <unistd.h>
-
 #include <cerrno>
-#include <cstddef>
-#include <functional>
-#include <string>
 
+#include "suduo/base/Logger.h"
+#include "suduo/base/WeakCallback.h"
 #include "suduo/net/Callbacks.h"
 #include "suduo/net/Channel.h"
+#include "suduo/net/EventLoop.h"
 #include "suduo/net/Socket.h"
+#include "suduo/net/SocketOpt.h"
 
 using TcpConnection = suduo::net::TcpConnection;
 using namespace suduo::net;
+using namespace suduo;
 
 void suduo::net::defaultConnectionCallback(const TcpConnectionPtr& conn) {
   LOG_TRACE << conn->local_address().to_Ip_port() << " -> "
@@ -26,7 +24,7 @@ void suduo::net::defaultConnectionCallback(const TcpConnectionPtr& conn) {
 
 void suduo::net::defaultMessageCallback(const TcpConnectionPtr& conn,
                                         Buffer* buffer, Timestamp receiveTime) {
-  buffer->retrive_all();
+  buffer->retrieve_all();
 }
 
 TcpConnection::TcpConnection(EventLoop* loop, const std::string& name,
@@ -53,7 +51,7 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& name,
 
 TcpConnection::~TcpConnection() {
   LOG_DEBUG << "TcpConnection::dtor[" << _name << "] at " << this
-            << " fd=" << _channel->fd() << " state=" << state_to_string();
+            << " fd=" << _channel->fd() << " state=" << stateToString();
   assert(_state == Disconnected);
 }
 
@@ -89,11 +87,11 @@ void TcpConnection::send(Buffer* buf) {
   if (_state == Connected) {
     if (_loop->is_in_loop_thread()) {
       send_in_loop(buf->peek(), buf->readable_bytes());
-      buf->retrive_all();
+      buf->retrieve_all();
     } else {
       void (TcpConnection::*fp)(const std::string& message) =
           &TcpConnection::send_in_loop;
-      _loop->run_in_loop(std::bind(fp, this, buf->retrive_all_as_stirng()));
+      _loop->run_in_loop(std::bind(fp, this, buf->retrieve_all_as_string()));
     }
   }
 }
@@ -116,7 +114,8 @@ void TcpConnection::send_in_loop(const void* message, size_t len) {
     if (nwrote >= 0) {
       remaining = len - nwrote;
       if (remaining == 0 && _write_complete_callback) {
-        loop->queue_in_loop(std::bind(_write_complete_callback, this));
+        _loop->queue_in_loop(
+            std::bind(_write_complete_callback, shared_from_this()));
       }
     } else {
       nwrote = 0;
@@ -131,13 +130,14 @@ void TcpConnection::send_in_loop(const void* message, size_t len) {
   }
   assert(remaining <= len);
   if (!fault_error && remaining > 0) {
-    size_t old_len = output_buffer().readable_bytes();
+    size_t old_len = output_buffer()->readable_bytes();
     if (old_len + remaining >= _hight_water_mark &&
         old_len < _hight_water_mark && _high_water_mark_callback) {
-      loop_->queue_in_loop(
-          std::bind(_high_water_mark_callback, this, old_len + remaining));
+      _loop->queue_in_loop(std::bind(_high_water_mark_callback,
+                                     shared_from_this(), old_len + remaining));
     }
-    _output_buffer.append(static_cast<const char*>(data) + nwrote, remaining);
+    _output_buffer.append(static_cast<const char*>(message) + nwrote,
+                          remaining);
     if (!_channel->is_writing()) {
       _channel->enable_writing();
     }
@@ -169,8 +169,8 @@ void TcpConnection::force_close() {
 void TcpConnection::force_close_with_delay(double seconds) {
   if (_state == Connected || _state == Disconnecting) {
     set_state(Disconnecting);
-    _loop->run_after(seconds,
-                     makeWeakCallback(this, &TcpConnection::force_close))
+    _loop->run_after(seconds, makeWeakCallback(shared_from_this(),
+                                               &TcpConnection::force_close));
   }
 }
 
@@ -226,10 +226,10 @@ void TcpConnection::connect_established() {
   _loop->assert_in_loop_thread();
   assert(_state == Connecting);
   set_state(Connected);
-  _channel->tie(this);
+  _channel->tie(shared_from_this());
   _channel->enable_reading();
 
-  _connection_callback(this);
+  _connection_callback(shared_from_this());
 }
 
 void TcpConnection::connect_destroyed() {
@@ -237,7 +237,7 @@ void TcpConnection::connect_destroyed() {
   if (_state == Connected) {
     set_state(Disconnected);
     _channel->disable_all();
-    _connection_callback(this);
+    _connection_callback(shared_from_this());
   }
   _channel->remove();
 }
@@ -247,7 +247,7 @@ void TcpConnection::handle_read(Timestamp receive_time) {
   int saved_errno = 0;
   ssize_t n = _input_buffer.read_fd(_channel->fd(), &saved_errno);
   if (n > 0) {
-    _message_callback(this, &_input_buffer, receive_time);
+    _message_callback(shared_from_this(), &_input_buffer, receive_time);
   } else if (n == 0) {
     handle_close();
   } else {
@@ -267,7 +267,8 @@ void TcpConnection::handle_write() {
       if (_output_buffer.readable_bytes() == 0) {
         _channel->disable_writing();
         if (_write_complete_callback) {
-          _loop->queue_on_loop(std::bind(_write_complete_callback, this));
+          _loop->queue_in_loop(
+              std::bind(_write_complete_callback, shared_from_this()));
         }
         if (_state == Disconnecting) {
           shutdown_in_loop();
@@ -282,7 +283,7 @@ void TcpConnection::handle_write() {
   }
 }
 
-void TcpConnection::handle_write() {
+void TcpConnection::handle_close() {
   _loop->assert_in_loop_thread();
   LOG_TRACE << "fd = " << _channel->fd() << " state = " << stateToString();
   assert(_state == Connected || _state == Disconnecting);
@@ -296,7 +297,8 @@ void TcpConnection::handle_write() {
 }
 
 void TcpConnection::handle_error() {
-  int err = sockets::getSocketError(_channel->fd());
-  LOG_ERROR << "TcpConnection::handleError [" << _name
-            << "] - SO_ERROR = " << err << " " << strerror_tl(err);
+  int err = sockets::get_socket_error(_channel->fd());
+  // TODO fix it
+  //  LOG_ERROR << "TcpConnection::handleError [" << _name
+  //            << "] - SO_ERROR = " << err << " " << strerror_tl(err);
 }

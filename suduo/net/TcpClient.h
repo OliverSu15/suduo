@@ -1,14 +1,8 @@
 #ifndef TCP_CLIENT
 #define TCP_CLIENT
-#include <memory>
-#include <string>
-#include <utility>
 
 #include "suduo/base/Mutex.h"
-#include "suduo/base/noncopyable.h"
-#include "suduo/net/Callbacks.h"
-#include "suduo/net/Channel.h"
-#include "suduo/net/InetAddress.h"
+#include "suduo/net/TcpConnection.h"
 namespace suduo {
 namespace net {
 class Connector;

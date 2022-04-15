@@ -1,14 +1,13 @@
 #include "suduo/net/poller/EPollPoller.h"
 
+#include <assert.h>
+#include <errno.h>
 #include <poll.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 
-#include <cstddef>
-
-#include "suduo/base/Timestamp.h"
+#include "suduo/base/Logger.h"
 #include "suduo/net/Channel.h"
-#include "suduo/net/Poller.h"
 using namespace suduo::net;
 using namespace suduo;
 
@@ -109,7 +108,7 @@ void EpollPoller::remove_channel(Channel* channel) {
   LOG_TRACE << "fd = " << fd;
   assert(_channels.find(fd) != _channels.end());
   assert(_channels[fd] == channel);
-  assert(channel->isNoneEvent());
+  assert(channel->is_none_event());
   int index = channel->index();
   assert(index == Action::Added || index == Action::Deleted);
   size_t n = _channels.erase(fd);
@@ -127,7 +126,7 @@ void EpollPoller::update(int operation, Channel* channel) {
   event.events = channel->event_size();
   event.data.ptr = channel;
   int fd = channel->fd();
-  LOG_TRACE << "epoll_ctl op = " << operationToString(operation)
+  LOG_TRACE << "epoll_ctl op = " << operation_to_string(operation)
             << " fd = " << fd << " event = { " << channel->events_to_string()
             << " }";
   if (epoll_ctl(epoll_fd, operation, fd, &event) < 0) {
@@ -135,7 +134,7 @@ void EpollPoller::update(int operation, Channel* channel) {
   }
 }
 
-const char* EPollPoller::operationToString(int op) {
+const char* EPollPoller::operation_to_string(int op) {
   switch (op) {
     case EPOLL_CTL_ADD:
       return "ADD";

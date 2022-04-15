@@ -170,7 +170,7 @@ class Buffer {
   const char* peek() const { return begin() + read_index; }
 
   char* write_begin() { return begin() + write_index; }
-  const char* write_begin() const { begin() + write_index; }
+  const char* write_begin() const { return begin() + write_index; }
   ssize_t read_fd(int fd, int* saved_errno);
 
  private:
@@ -183,7 +183,7 @@ class Buffer {
     } else {
       size_t readable = readable_bytes();
       std::copy(begin() + read_index, begin() + write_index,
-                begin + pre_append_size);
+                begin() + pre_append_size);
       read_index = pre_append_size;
       write_index = read_index + readable;
     }

@@ -1,14 +1,15 @@
-#include "Connector.h"
+#include "suduo/net/Connector.h"
 
 #include <cerrno>
-#include <cstdio>
-#include <functional>
 
+#include "suduo/base/Logger.h"
 #include "suduo/net/Channel.h"
+#include "suduo/net/EventLoop.h"
 #include "suduo/net/SocketOpt.h"
 
 using Connector = suduo::net::Connector;
 using namespace suduo::net;
+using namespace suduo;
 
 const int Connector::MAX_RETRY_DELAY_MS;
 
@@ -32,7 +33,7 @@ void Connector::start() {
 }
 
 void Connector::start_in_loop() {
-  _loop->assertInLoopThread();
+  _loop->assert_in_loop_thread();
   assert(_state == Disconnected);
   if (_connect) {
     connect();
@@ -49,7 +50,7 @@ void Connector::stop() {
 }
 
 void Connector::stop_in_loop() {
-  loop_->assertInLoopThread();
+  _loop->assert_in_loop_thread();
   if (_state == Connecting) {
     set_state(Disconnected);
     int sock_fd = remove_and_reset_channel();
@@ -67,7 +68,7 @@ void Connector::connect() {
 }
 
 void Connector::restart() {
-  loop_->assertInLoopThread();
+  _loop->assert_in_loop_thread();
   set_state(Disconnected);
   retry_delay_ms = INIT_RETRY_DELAY_MS;
   _connect = true;
@@ -88,8 +89,8 @@ int Connector::remove_and_reset_channel() {
   _channel->disable_all();
   _channel->remove();
   int sock_fd = _channel->fd();
-  loop_->queueInLoop(std::bind(&Connector::reset_channel, this));
-  return sockfd;
+  _loop->queue_in_loop(std::bind(&Connector::reset_channel, this));
+  return sock_fd;
 }
 
 void Connector::reset_channel() { _channel.reset(); }
@@ -100,8 +101,9 @@ void Connector::handle_write() {
     int sock_fd = remove_and_reset_channel();
     int err = sockets::get_socket_error(sock_fd);
     if (err) {
-      LOG_WARN << "Connector::handleWrite - SO_ERROR = " << err << " "
-               << strerror_tl(err);
+      // TODO fix it
+      //  LOG_WARN << "Connector::handleWrite - SO_ERROR = " << err << " "
+      //           << strerror_tl(err);
       retry(sock_fd);
     } else if (sockets::is_self_connect(sock_fd)) {
       LOG_WARN << "Connector::handleWrite - Self connect";
@@ -115,7 +117,7 @@ void Connector::handle_write() {
       }
     }
   } else {
-    assert(state_ == kDisconnected);
+    assert(_state == Disconnected);
   }
 }
 
@@ -124,7 +126,8 @@ void Connector::handle_error() {
   if (_state == Connecting) {
     int sock_fd = remove_and_reset_channel();
     int err = sockets::get_socket_error(sock_fd);
-    LOG_TRACE << "SO_ERROR = " << err << " " << strerror_tl(err);
+    // TODO fix it
+    // LOG_TRACE << "SO_ERROR = " << err << " " << strerror_tl(err);
     retry(sock_fd);
   }
 }
@@ -134,10 +137,10 @@ void Connector::retry(int sockfd) {
   set_state(Disconnected);
   if (_connect) {
     LOG_INFO << "Connector::retry - Retry connecting to "
-             << _server_addr.toIpPort() << " in " << retry_delay_ms
+             << _server_addr.to_Ip_port() << " in " << retry_delay_ms
              << " milliseconds. ";
-    loop_->runAfter(retry_delay_ms / 1000.0,
-                    std::bind(&Connector::start_in_loop, shared_from_this()));
+    _loop->run_after(retry_delay_ms / 1000.0,
+                     std::bind(&Connector::start_in_loop, shared_from_this()));
     retry_delay_ms = std::min(retry_delay_ms * 2, MAX_RETRY_DELAY_MS);
   } else {
     LOG_DEBUG << "do not connect";

@@ -1,7 +1,7 @@
 #ifndef EPOLLPOLLER_H
 #define EPOLLPOLLER_H
-#include "suduo/base/Timestamp.h"
-#include "suduo/net/Channel.h"
+#include <vector>
+
 #include "suduo/net/Poller.h"
 struct epoll_event;
 namespace suduo {

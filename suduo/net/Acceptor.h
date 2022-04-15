@@ -4,10 +4,11 @@
 
 #include "suduo/base/noncopyable.h"
 #include "suduo/net/Channel.h"
-#include "suduo/net/InetAddress.h"
 #include "suduo/net/Socket.h"
 namespace suduo {
 namespace net {
+class EventLoop;
+class InetAddress;
 class Acceptor : noncopyable {
  public:
   using NewConnectionCallback =

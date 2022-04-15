@@ -1,19 +1,12 @@
 #ifndef TCP_CONNECTION_H
 #define TCP_CONNECTION_H
-#include <netinet/tcp.h>
-
-#include <algorithm>
 #include <any>
-#include <cstddef>
 #include <memory>
-#include <string>
 
 #include "Callbacks.h"
-#include "suduo/base/Timestamp.h"
 #include "suduo/base/noncopyable.h"
-#include "suduo/net/Channel.h"
+#include "suduo/net/Buffer.h"
 #include "suduo/net/InetAddress.h"
-#include "suduo/net/Socket.h"
 struct tcp_info;
 
 namespace suduo {
@@ -21,7 +14,8 @@ namespace net {
 class Channel;
 class EventLoop;
 class Socket;
-class TcpConnection : noncopyable {
+class TcpConnection : noncopyable,
+                      public std::enable_shared_from_this<TcpConnection> {
  public:
   TcpConnection(EventLoop* loop, const std::string& name, int sock_fd,
                 const InetAddress& local_addr, const InetAddress& peer_addr);
@@ -114,8 +108,8 @@ class TcpConnection : noncopyable {
   Buffer _output_buffer;
   std::any _context;
 };
-
-using std::shared_ptr<TcpConnection> Tcp_connection_ptr;
+// typedef Tcp_connection_ptr
+using Tcp_connection_ptr = std::shared_ptr<TcpConnection>;
 }  // namespace net
 }  // namespace suduo
 #endif

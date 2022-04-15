@@ -5,8 +5,6 @@
 #include "suduo/base/Condition.h"
 #include "suduo/base/Mutex.h"
 #include "suduo/base/Thread.h"
-#include "suduo/base/noncopyable.h"
-#include "suduo/net/Channel.h"
 namespace suduo {
 namespace net {
 class EventLoop;

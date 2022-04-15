@@ -3,14 +3,9 @@
 #include <assert.h>
 #include <errno.h>
 #include <poll.h>
-#include <sys/poll.h>
 
-#include <algorithm>
-#include <cerrno>
-
-#include "suduo/base/Timestamp.h"
+#include "suduo/base/Logger.h"
 #include "suduo/net/Channel.h"
-#include "suduo/net/Poller.h"
 using PollPoller = suduo::net::PollPoller;
 using namespace suduo::net;
 using namespace suduo;

@@ -1,16 +1,20 @@
 #include "TcpServer.h"
 
+#include <stdio.h>
+
 #include <functional>
 
+#include "suduo/base/Logger.h"
 #include "suduo/net/Acceptor.h"
-#include "suduo/net/Callbacks.h"
+#include "suduo/net/EventLoop.h"
 #include "suduo/net/EventLoopThreadPool.h"
+#include "suduo/net/SocketOpt.h"
 
 using TcpServer = suduo::net::TcpServer;
 using namespace suduo::net;
 
 TcpServer::TcpServer(EventLoop* loop, const InetAddress& listen_addr,
-                     const string& name, Option option)
+                     const std::string& name, Option option)
     : _loop(loop),
       _ip_port(listen_addr.to_Ip_port()),
       _name(name),
@@ -45,7 +49,7 @@ void TcpServer::start() {
     _started = 1;
     thread_pool()->start(_thread_init_callback);
     assert(!_acceptor->listening());
-    _loop->run_in_loop(std::bind(&Acceptor::listen, _acceptor));
+    _loop->run_in_loop(std::bind(&Acceptor::listen, get_pointer(_acceptor)));
   }
 }
 
@@ -73,7 +77,7 @@ void TcpServer::new_connection(int sock_fd, const InetAddress& peer_addr) {
   ioLoop->run_in_loop(std::bind(&TcpConnection::connect_established, conn));
 }
 
-void TcpServer::remove_connection(const TcpConnection& conn) {
+void TcpServer::remove_connection(const TcpConnectionPtr& conn) {
   _loop->run_in_loop(
       std::bind(&TcpServer::remove_connection_in_loop, this, conn));
 }

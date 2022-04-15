@@ -14,11 +14,8 @@
 #include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Mutex.h"
 #include "suduo/base/Timestamp.h"
-#include "suduo/base/noncopyable.h"
 #include "suduo/net/Callbacks.h"
-#include "suduo/net/Channel.h"
-#include "suduo/net/Poller.h"
-#include "suduo/net/TimerQueue.h"
+#include "suduo/net/TimerId.h"
 namespace suduo {
 namespace net {
 class Channel;
@@ -66,8 +63,8 @@ class EventLoop : noncopyable {
   bool event_handing() const { return _event_handling; }
 
   void set_context(const std::any& context) { _context = context; }
-
-  const std::any& get_mutable_context() { return &_context; }
+  const std::any& get_context() const { return _context; }
+  const std::any* get_mutable_context() { return &_context; }
 
   static EventLoop* get_event_loop_of_current_thread();
 

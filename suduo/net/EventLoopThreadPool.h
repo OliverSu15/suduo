@@ -7,10 +7,10 @@
 #include <vector>
 
 #include "suduo/base/noncopyable.h"
-#include "suduo/net/Channel.h"
-#include "suduo/net/EventLoopThread.h"
 namespace suduo {
 namespace net {
+class EventLoop;
+class EventLoopThread;
 class EventLoopThreadPool : noncopyable {
  public:
   using ThreadInitCallback = std::function<void(EventLoop*)>;

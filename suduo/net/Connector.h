@@ -1,15 +1,15 @@
 #ifndef CONNECTOR_H
 #define CONNECTOR_H
-#include "suduo/base/noncopyable.h"
-#include "suduo/net/Channel.h"
-#include "suduo/net/InetAddress.h"
-#inlcude "suduo/net/Callbacks.h"
+#include <functional>
 #include <memory>
+
+#include "suduo/base/noncopyable.h"
+#include "suduo/net/InetAddress.h"
 namespace suduo {
 namespace net {
 class Channel;
 class EventLoop;
-class Connector : noncopyable {
+class Connector : noncopyable, public std::enable_shared_from_this<Connector> {
  public:
   using NewConnectionCallback = std::function<void(int sockfd)>;
 
@@ -52,4 +52,4 @@ class Connector : noncopyable {
 }  // namespace net
 }  // namespace suduo
 
-#endif;
+#endif

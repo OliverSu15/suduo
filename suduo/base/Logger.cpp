@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -10,17 +11,32 @@
 #include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/LogStream.h"
 #include "suduo/base/Timestamp.h"
+
+// namespace suduo
+
 namespace suduo {
 std::array<std::string, 6> LogLevelName = {"TRACE", "DEBUG", "INFO",
                                            "WARN",  "ERROR", "FATAL"};
+
 void default_output(const char* val, int len) {
   // TODO change later
   size_t n = std::fwrite(val, sizeof val[0], len, stdout);
 }
 
 void default_flush() { fflush(stdout); }
+
+Logger::LogLevel initLogLevel() {
+  if (::getenv("MUDUO_LOG_TRACE"))
+    return Logger::TRACE;
+  else if (::getenv("MUDUO_LOG_DEBUG"))
+    return Logger::DEBUG;
+  else
+    return Logger::INFO;
+}
 Logger::OutputFunc global_output = default_output;
 Logger::FlushFunc global_flush = default_flush;
+
+Logger::LogLevel g_logLevel = initLogLevel();
 }  // namespace suduo
 
 using Logger = suduo::Logger;
@@ -42,6 +58,19 @@ Logger::Logger(const char* source, int line, LogLevel level)
     : _source(source),
       _line(line),
       _level(level),
+      _stream(),
+      _time(Timestamp::now()) {
+  _source = _source.substr(_source.find_last_of('/') + 1);
+  Current_thread_info::tid();
+  _stream << _time.to_string();
+  _stream << Current_thread_info::tid_string() << " ";
+  _stream << LogLevelName[_level] << " ";
+}
+
+Logger::Logger(const char* source, int line, bool to_abort)
+    : _source(source),
+      _line(line),
+      _level(to_abort ? FATAL : ERROR),
       _stream(),
       _time(Timestamp::now()) {
   _source = _source.substr(_source.find_last_of('/') + 1);

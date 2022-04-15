@@ -1,18 +1,13 @@
-#include "EventLoop.h"
+#include "suduo/net/EventLoop.h"
 
 #include <signal.h>
 #include <sys/eventfd.h>
-#include <sys/types.h>
 #include <unistd.h>
 
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <utility>
+#include <algorithm>
 
-#include "suduo/base/CurrentThreadInfo.h"
+#include "suduo/base/Logger.h"
 #include "suduo/base/Mutex.h"
-#include "suduo/base/Timestamp.h"
 #include "suduo/net/Channel.h"
 #include "suduo/net/Poller.h"
 #include "suduo/net/SocketOpt.h"
@@ -88,7 +83,7 @@ void EventLoop::loop() {
     _active_channel.clear();
     _poll_return_time = _poller->poll(POLL_TIME_MS, &_active_channel);
     ++_iteratoin;
-    if (Logger::logLevel() <= Logger::TRACE) {
+    if (Logger::log_level() <= Logger::LogLevel::TRACE) {
       print_active_channels();
     }
     // TODO sort channel by priority
@@ -176,7 +171,7 @@ bool EventLoop::has_channel(Channel* channel) {
   return _poller->has_channel(channel);
 }
 
-void EventLoop::assert_in_loop_thread() {
+void EventLoop::abort_not_in_loop_thread() {
   LOG_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
             << " was created in threadId_ = " << _thread_ID
             << ", current thread id = " << Current_thread_info::tid();
@@ -211,8 +206,8 @@ void EventLoop::do_pending_functors() {
   _calling_pending_functors = false;
 }
 
-void EventLoop::poll_return_time() {
+void EventLoop::print_active_channels() const {
   for (const Channel* channel : _active_channel) {
-    LOG_TRACE << "{" << channel->reventsToString() << "} ";
+    LOG_TRACE << "{" << channel->revents_to_string() << "} ";
   }
 }
