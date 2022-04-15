@@ -8,10 +8,11 @@
 #include <string>
 #include <variant>
 
+#include "suduo/base/copyable.h"
 #include "suduo/base/noncopyable.h"
 namespace suduo {
 namespace net {
-class InetAddress {
+class InetAddress : public suduo::copyable {
  public:
   explicit InetAddress(uint16_t port, bool loop_back_only = false,
                        bool ipv6 = false);
@@ -20,6 +21,8 @@ class InetAddress {
 
   explicit InetAddress(const sockaddr_in& addr) : _addr(addr) {}
   explicit InetAddress(const sockaddr_in6& addr) : _addr(addr) {}
+
+  InetAddress() {}
 
   sa_family_t family() const;
   std::string to_Ip() const;

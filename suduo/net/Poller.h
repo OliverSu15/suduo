@@ -5,7 +5,7 @@
 
 #include "suduo/base/Timestamp.h"
 #include "suduo/base/noncopyable.h"
-#include "suduo/net/Channel.h"
+#include "suduo/net/EventLoop.h"
 namespace suduo {
 namespace net {
 class Channel;
@@ -25,7 +25,7 @@ class Poller : noncopyable {
 
   static Poller* new_dafault_poller(EventLoop* loop);
 
-  void assert_in_loop_thread() const { _owner_loop->assertInLoopThread(); }
+  void assert_in_loop_thread() const { _owner_loop->assert_in_loop_thread(); }
 
  protected:
   using ChannelMap = std::map<int, Channel*>;

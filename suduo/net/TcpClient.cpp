@@ -1,18 +1,18 @@
 #include "TcpClient.h"
 
-#include <functional>
-#include <string>
+#include <stdio.h>
 
-#include "suduo/base/Mutex.h"
-#include "suduo/net/Callbacks.h"
-#include "suduo/net/Channel.h"
-#include "suduo/net/InetAddress.h"
+#include "suduo/base/Logger.h"
+#include "suduo/net/Connector.h"
+#include "suduo/net/EventLoop.h"
+#include "suduo/net/SocketOpt.h"
 using TcpClient = suduo::net::TcpClient;
-
+using namespace suduo;
+using namespace suduo::net;
 namespace suduo {
 namespace net {
 namespace detail {
-void remove_connection(EventLoop* loop, const TcpConnection& conn) {
+void remove_connection(EventLoop* loop, const TcpConnectionPtr& conn) {
   loop->queue_in_loop(std::bind(&TcpConnection::connect_destroyed, conn));
 }
 void remove_connector(const ConnectorPtr& connector) {}
@@ -26,13 +26,14 @@ TcpClient::TcpClient(EventLoop* loop, const InetAddress& server_addr,
       _connector(new Connector(loop, server_addr)),
       _name(name),
       _connection_callback(defaultConnectionCallback),
-      _message_callback(defaultMessageCallback);
-_retry(false), _connect(true), _next_conn_id(1);
-{
+      _message_callback(defaultMessageCallback),
+      _retry(false),
+      _connect(true),
+      _next_conn_id(1) {
   _connector->set_new_connection_callback(
-      srd::bind(&Tcp::new_connection, this, std::placeholders::_1));
+      std::bind(&TcpClient::new_connection, this, std::placeholders::_1));
   // FIXME setConnectFailedCallback
-  LOG_INFO << "TcpClient::TcpClient[" << name_ << "] - connector "
+  LOG_INFO << "TcpClient::TcpClient[" << _name << "] - connector "
            << get_pointer(_connector);
 }
 
@@ -48,8 +49,7 @@ TcpClient::~TcpClient() {
 
   if (conn) {
     assert(_loop == conn->get_loop());
-    CloseCallback cb =
-        std::bind(&detail::remove_connection, _loop, std::placeholders::_1);
+    CloseCallback cb = std::bind(&detail::remove_connection, _loop, _1);
     _loop->run_in_loop(std::bind(&TcpConnection::set_close_callback, conn, cb));
     if (unique) {
       conn->force_close();
@@ -62,7 +62,7 @@ TcpClient::~TcpClient() {
 
 void TcpClient::connect() {
   LOG_INFO << "TcpClient::connect[" << _name << "] - connecting to "
-           << _connector->serverAddress().toIpPort();
+           << _connector->server_address().to_Ip_port();
 
   _connect = true;
   _connector->start();
@@ -85,7 +85,7 @@ void TcpClient::new_connection(int sock_fd) {
   _loop->assert_in_loop_thread();
   InetAddress peer_addr(sockets::get_peer_addr(sock_fd));
   char buf[32];
-  snprintf(buf, sizeof(buf), ":%s#%d", peerAddr.toIpPort().c_str(),
+  snprintf(buf, sizeof(buf), ":%s#%d", peer_addr.to_Ip_port().c_str(),
            _next_conn_id);
   ++_next_conn_id;
   std::string conn_name = _name + buf;
@@ -96,8 +96,7 @@ void TcpClient::new_connection(int sock_fd) {
   conn->set_connection_callback(_connection_callback);
   conn->set_message_callback(_message_callback);
   conn->set_write_complete_callback(_write_complete_callback);
-  conn->set_close_callback(
-      std::bind(&TcpClient::remove_connection, this, std::placeholder::_1));
+  conn->set_close_callback(std::bind(&TcpClient::remove_connection, this, _1));
   MutexLockGuard lock(_mutex);
   _connection = conn;
   conn->connect_established();
@@ -112,7 +111,7 @@ void TcpClient::remove_connection(const TcpConnectionPtr& conn) {
   _loop->queue_in_loop(std::bind(&TcpConnection::connect_destroyed, conn));
   if (_retry && _connect) {
     LOG_INFO << "TcpClient::connect[" << _name << "] - Reconnecting to "
-             << _connector->server_address().to_ip_port();
+             << _connector->server_address().to_Ip_port();
     _connector->restart();
   }
 }

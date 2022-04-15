@@ -1,12 +1,18 @@
-#include "Channel.h"
+#include "suduo/net/Channel.h"
+
+#include <poll.h>
 
 #include <memory>
+#include <sstream>
 #include <string>
 
+#include "suduo/base/Logger.h"
+#include "suduo/net/EventLoop.h"
+// namespace suduo
 using Channel = suduo::net::Channel;
 
 const int Channel::none_event = 0;
-const int Channel::read_event = POLIN | POLLPRI;
+const int Channel::read_event = POLLIN | POLLPRI;
 const int Channel::write_event = POLLOUT;
 
 Channel::Channel(EventLoop* loop, int fd)
@@ -32,7 +38,7 @@ void Channel::tie(const std::shared_ptr<void>& obj) {
 
 void Channel::update() {
   _added_to_loop = true;
-  _loop->update_chaneel(this);
+  _loop->update_channel(this);
 }
 
 void Channel::remove() {
@@ -45,10 +51,10 @@ void Channel::handle_event(Timestamp receive_time) {
   if (_tied) {
     guard = _tie.lock();
     if (guard) {
-      handle_eventl_with_guard(receive_time);
+      handle_event_with_guard(receive_time);
     }
   } else {
-    handle_eventl_with_guard(receive_time);
+    handle_event_with_guard(receive_time);
   }
 }
 
@@ -63,14 +69,14 @@ void Channel::handle_event_with_guard(Timestamp receivetime) {
   }
 
   if (_revents & POLLNVAL) {
-    LOG_WARN << "fd = " << fd_ << " Channel::handle_event() POLLNVAL";
+    LOG_WARN << "fd = " << _fd << " Channel::handle_event() POLLNVAL";
   }
 
   if (_revents & (POLLERR | POLLNVAL)) {
     if (_error_callback) _error_callback();
   }
-  if (_revents & (POLLIN | POLLPRT | POLLRDHUP)) {
-    if (_read_callback) _read_callback();
+  if (_revents & (POLLIN | POLLPRI | POLLRDHUP)) {
+    if (_read_callback) _read_callback(receivetime);
   }
   if (_revents & POLLOUT) {
     if (_write_callback) _write_callback();
@@ -79,10 +85,10 @@ void Channel::handle_event_with_guard(Timestamp receivetime) {
 }
 
 std::string Channel::revents_to_string() const {
-  return event_to_string(_fd, _revents);
+  return events_to_string(_fd, _revents);
 }
 
-std::stirng Channel::events_to_string() const {
+std::string Channel::events_to_string() const {
   return events_to_string(_fd, _events);
 }
 

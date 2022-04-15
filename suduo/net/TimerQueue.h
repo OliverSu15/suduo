@@ -1,11 +1,10 @@
 #ifndef TIMER_QUEUE_H
 #define TIMER_QUEUE_H
-#include <cstdint>
 #include <set>
 #include <vector>
 
+#include "suduo/base/Mutex.h"
 #include "suduo/base/Timestamp.h"
-#include "suduo/base/noncopyable.h"
 #include "suduo/net/Callbacks.h"
 #include "suduo/net/Channel.h"
 namespace suduo {

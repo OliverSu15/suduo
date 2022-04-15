@@ -1,4 +1,4 @@
-#include "Acceptor.h"
+#include "suduo/net/Acceptor.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -6,6 +6,8 @@
 
 #include <functional>
 
+#include "suduo/base/Logger.h"
+#include "suduo/net/EventLoop.h"
 #include "suduo/net/InetAddress.h"
 #include "suduo/net/SocketOpt.h"
 using Acceptor = suduo::net::Acceptor;
@@ -31,14 +33,14 @@ Acceptor::~Acceptor() {
 }
 
 void Acceptor::listen() {
-  _loop->assertInLoopThread();
+  _loop->assert_in_loop_thread();
   _listening = true;
   _accept_socket.listen();
   _accept_Channel.enable_reading();
 }
 
 void Acceptor::handle_read() {
-  loop_->assertInLoopThread();
+  _loop->assert_in_loop_thread();
   InetAddress peer_addr;
   int connfd = _accept_socket.accept(&peer_addr);
   if (connfd >= 0) {

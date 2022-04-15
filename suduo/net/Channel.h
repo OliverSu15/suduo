@@ -1,5 +1,5 @@
 #ifndef CHANNEL_H
-#define CHANEEL_H
+#define CHANNEL_H
 #include <functional>
 #include <memory>
 #include <utility>
@@ -29,7 +29,7 @@ class Channel : noncopyable {
 
   int fd() const { return _fd; }
   int event_size() const { return _events; }
-  int set_revents(int revt) { _revents = revt; }
+  void set_revents(int revt) { _revents = revt; }
   bool is_none_event() const { return _events == none_event; }
 
   void enable_reading() {
@@ -67,10 +67,10 @@ class Channel : noncopyable {
   void remove();
 
  private:
-  static std::string event_to_string(int fd, int ev);
+  static std::string events_to_string(int fd, int ev);
 
   void update();
-  void handle_eventl_with_guard(Timestamp receive_time);
+  void handle_event_with_guard(Timestamp receive_time);
   static const int none_event;
   static const int read_event;
   static const int write_event;

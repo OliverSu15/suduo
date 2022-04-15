@@ -68,6 +68,14 @@ class Timestamp {
   static const char* const _log_time_format_string;
 };
 
+inline bool operator<(Timestamp lhs, Timestamp rhs) {
+  return lhs.microSecondsSinceEpoch() < rhs.microSecondsSinceEpoch();
+}
+
+inline bool operator==(Timestamp lhs, Timestamp rhs) {
+  return lhs.microSecondsSinceEpoch() == rhs.microSecondsSinceEpoch();
+}
+
 // exits only to use the muduo test more easily
 // TODO remove
 inline double timeDifference(Timestamp high, Timestamp low) {

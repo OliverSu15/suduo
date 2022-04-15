@@ -2,7 +2,6 @@
 #define TIMER_ID_H
 #include <cstdint>
 
-#include "suduo/net/TimerQueue.h"
 namespace suduo {
 namespace net {
 class Timer;
