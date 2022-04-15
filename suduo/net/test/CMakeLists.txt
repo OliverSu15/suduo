@@ -13,8 +13,8 @@ target_link_libraries(eventloop_unittest suduo_net)
 add_executable(eventloopthread_unittest EventLoopThread_unittest.cpp)
 target_link_libraries(eventloopthread_unittest suduo_net)
 
-# add_executable(eventloopthreadpool_unittest EventLoopThreadPool_unittest.cc)
-# target_link_libraries(eventloopthreadpool_unittest suduo_net)
+add_executable(eventloopthreadpool_unittest EventLoopThreadPool_unittest.cpp)
+target_link_libraries(eventloopthreadpool_unittest suduo_net)
 
 if(BOOSTTEST_LIBRARY)
 add_executable(buffer_unittest Buffer_unittest.cpp)
