@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <iostream>
+
 #include "suduo/base/Thread.h"
 #include "suduo/net/EventLoop.h"
 
