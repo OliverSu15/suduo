@@ -59,6 +59,7 @@ EventLoop::EventLoop()
   } else {
     loop_in_this_thrad = this;
   }
+
   _wake_up_channel->set_read_callback(std::bind(&EventLoop::handle_read, this));
   _wake_up_channel->enable_reading();
 }
@@ -74,9 +75,10 @@ EventLoop::~EventLoop() {
 
 void EventLoop::loop() {
   assert(!_looping);
+
   assert_in_loop_thread();
   _looping = true;
-  _quit = true;  // FIXME: what if someone calls quit() before loop() ?
+  _quit = false;  // FIXME: what if someone calls quit() before loop() ?
   LOG_TRACE << "EventLoop " << this << " start looping";
 
   while (!_quit) {

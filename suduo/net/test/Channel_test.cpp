@@ -7,6 +7,7 @@
 #include <functional>
 #include <map>
 
+#include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Logger.h"
 #include "suduo/net/EventLoop.h"
 
@@ -18,7 +19,8 @@ void print(const char* msg) {
   Timestamp& last = lasts[msg];
   Timestamp now = Timestamp::now();
   printf("%s tid %d %s delay %f\n", now.to_string().c_str(),
-         Current_thread_info::tid(), msg, timeDifference(now, last));
+         Current_thread_info::tid(), msg,
+         timeDifference(now, last) / (MICROSECOND_TO_NANOSECOND));
   last = now;
 }
 
@@ -91,6 +93,7 @@ class PeriodicTimer {
 int main(int argc, char* argv[]) {
   LOG_INFO << "pid = " << getpid() << ", tid = " << Current_thread_info::tid()
            << " Try adjusting the wall clock, see what happens.";
+
   EventLoop loop;
   PeriodicTimer timer(&loop, 1, std::bind(print, "PeriodicTimer"));
   timer.start();

@@ -59,7 +59,8 @@ class Timestamp {
   }
   static Timestamp invalid() { return Timestamp(); }
   int64_t microSecondsSinceEpoch() {
-    return _time_point.time_since_epoch().count();
+    return ((_time_point.time_since_epoch().count()) /
+            (MICROSECOND_TO_NANOSECOND));
   }
 
  private:
@@ -83,8 +84,10 @@ inline double timeDifference(Timestamp high, Timestamp low) {
   return diff.count();  // nanosecond
 }
 inline Timestamp addTime(Timestamp timestamp, double seconds) {
-  int64_t delta = static_cast<int64_t>(seconds * SECOND_TO_NANOSECOND);
-  return Timestamp(timestamp.microSecondsSinceEpoch() + delta);
+  int64_t delta = static_cast<int64_t>(seconds * (SECOND_TO_MICROSECOND));
+  // return Timestamp(timestamp.microSecondsSinceEpoch() + delta);
+  return Timestamp((timestamp.microSecondsSinceEpoch() + delta) /
+                   SECOND_TO_MICROSECOND);
 }
 
 }  // namespace suduo
