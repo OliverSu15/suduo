@@ -12,8 +12,8 @@ namespace suduo {
 namespace net {
 class Buffer {
  public:
-  static const size_t init_size = 1024;
-  static const size_t pre_append_size = 8;
+  static const size_t init_size;
+  static const size_t pre_append_size;
 
   explicit Buffer(size_t size = init_size)
       : _buffer(pre_append_size + init_size),
