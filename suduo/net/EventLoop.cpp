@@ -6,6 +6,7 @@
 
 #include <algorithm>
 
+#include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Logger.h"
 #include "suduo/base/Mutex.h"
 #include "suduo/net/Channel.h"
@@ -119,8 +120,10 @@ void EventLoop::run_in_loop(Functor cb) {
 }
 
 void EventLoop::queue_in_loop(Functor cb) {
-  MutexLockGuard lock(_mutex);
-  _pending_functors.push_back(std::move(cb));
+  {
+    MutexLockGuard lock(_mutex);
+    _pending_functors.push_back(std::move(cb));
+  }
 
   if (!is_in_loop_thread() || _calling_pending_functors) {
     wakeup();
@@ -137,7 +140,9 @@ TimerID EventLoop::run_at(Timestamp time, TimerCallback cb) {
 }
 
 TimerID EventLoop::run_after(double delay, TimerCallback cb) {
+  // LOG_INFO << Timestamp::now().to_string();
   Timestamp time(addTime(Timestamp::now(), delay));
+  // LOG_INFO << time.to_string();
   return run_at(time, std::move(cb));
 }
 
@@ -198,10 +203,10 @@ void EventLoop::handle_read() {
 void EventLoop::do_pending_functors() {
   std::vector<Functor> functors;
   _calling_pending_functors = true;
-
-  MutexLockGuard lock(_mutex);
-  functors.swap(_pending_functors);
-
+  {
+    MutexLockGuard lock(_mutex);
+    functors.swap(_pending_functors);
+  }
   for (const Functor& functor : functors) {
     functor();
   }

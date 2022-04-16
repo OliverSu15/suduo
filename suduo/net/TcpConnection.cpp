@@ -130,7 +130,7 @@ void TcpConnection::send_in_loop(const void* message, size_t len) {
   }
   assert(remaining <= len);
   if (!fault_error && remaining > 0) {
-    size_t old_len = output_buffer()->readable_bytes();
+    size_t old_len = _output_buffer.readable_bytes();
     if (old_len + remaining >= _hight_water_mark &&
         old_len < _hight_water_mark && _high_water_mark_callback) {
       _loop->queue_in_loop(std::bind(_high_water_mark_callback,
@@ -162,7 +162,8 @@ void TcpConnection::shutdown_in_loop() {
 void TcpConnection::force_close() {
   if (_state == Connected || _state == Disconnecting) {
     set_state(Disconnecting);
-    _loop->queue_in_loop(std::bind(&TcpConnection::force_close_in_loop, this));
+    _loop->queue_in_loop(
+        std::bind(&TcpConnection::force_close_in_loop, shared_from_this()));
   }
 }
 
@@ -291,7 +292,7 @@ void TcpConnection::handle_close() {
   set_state(Disconnected);
   _channel->disable_all();
 
-  TcpConnectionPtr guard_this(this);
+  TcpConnectionPtr guard_this(shared_from_this());
   _connection_callback(guard_this);
   _close_callback(guard_this);
 }

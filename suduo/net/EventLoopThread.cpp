@@ -29,11 +29,13 @@ EventLoop* EventLoopThread::start_loop() {
   assert(!_thread.started());
   _thread.start();
   EventLoop* loop = nullptr;
-  MutexLockGuard lock(_mutex);
-  while (_loop == nullptr) {
-    _cond.wait();
+  {
+    MutexLockGuard lock(_mutex);
+    while (_loop == nullptr) {
+      _cond.wait();
+    }
+    loop = _loop;
   }
-  loop = _loop;
   return loop;
 }
 

@@ -11,7 +11,8 @@ using Connector = suduo::net::Connector;
 using namespace suduo::net;
 using namespace suduo;
 
-const int Connector::MAX_RETRY_DELAY_MS;
+const int Connector::MAX_RETRY_DELAY_MS = 30 * 1000;
+const int Connector::INIT_RETRY_DELAY_MS = 500;
 
 Connector::Connector(EventLoop* loop, const InetAddress& server_addr)
     : _loop(loop),
@@ -64,6 +65,38 @@ void Connector::connect() {
   int saved_errno = (ret == 0) ? 0 : errno;
   switch (saved_errno) {
     // TODO error handle
+    case 0:
+    case EINPROGRESS:
+    case EINTR:
+    case EISCONN:
+      connecting(sock_fd);
+      break;
+
+    case EAGAIN:
+    case EADDRINUSE:
+    case EADDRNOTAVAIL:
+    case ECONNREFUSED:
+    case ENETUNREACH:
+      retry(sock_fd);
+      break;
+
+    case EACCES:
+    case EPERM:
+    case EAFNOSUPPORT:
+    case EALREADY:
+    case EBADF:
+    case EFAULT:
+    case ENOTSOCK:
+      LOG_SYSERR << "connect error in Connector::startInLoop " << saved_errno;
+      sockets::close(sock_fd);
+      break;
+
+    default:
+      LOG_SYSERR << "Unexpected error in Connector::startInLoop "
+                 << saved_errno;
+      sockets::close(sock_fd);
+      // connectErrorCallback_();
+      break;
   }
 }
 

@@ -28,7 +28,7 @@ class Channel : noncopyable {
   void tie(const std::shared_ptr<void>&);
 
   int fd() const { return _fd; }
-  int event_size() const { return _events; }
+  int events() const { return _events; }
   void set_revents(int revt) { _revents = revt; }
   bool is_none_event() const { return _events == none_event; }
 

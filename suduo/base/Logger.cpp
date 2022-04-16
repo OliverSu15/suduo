@@ -49,7 +49,7 @@ Logger::Logger(const char* source, int line)
       _level(INFO) {
   _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
-  _stream << _time.to_string();
+  _stream << _time.to_string() << " ";
   _stream << Current_thread_info::tid_string() << " ";
   _stream << LogLevelName[_level] << " ";
 }
@@ -62,7 +62,7 @@ Logger::Logger(const char* source, int line, LogLevel level)
       _time(Timestamp::now()) {
   _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
-  _stream << _time.to_string();
+  _stream << _time.to_string() << " ";
   _stream << Current_thread_info::tid_string() << " ";
   _stream << LogLevelName[_level] << " ";
 }
@@ -75,7 +75,7 @@ Logger::Logger(const char* source, int line, bool to_abort)
       _time(Timestamp::now()) {
   _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
-  _stream << _time.to_string();
+  _stream << _time.to_string() << " ";
   _stream << Current_thread_info::tid_string() << " ";
   _stream << LogLevelName[_level] << " ";
 }
@@ -87,7 +87,7 @@ Logger::Logger(const char* source, int line, LogLevel level, const char* func)
       _time(Timestamp::now()) {
   _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
-  _stream << _time.to_string();
+  _stream << _time.to_string() << " ";
   _stream << Current_thread_info::tid_string() << " ";
   _stream << LogLevelName[_level] << " ";
   _stream << func << ' ';

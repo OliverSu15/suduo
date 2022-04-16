@@ -42,6 +42,7 @@ void Channel::update() {
 }
 
 void Channel::remove() {
+  assert(is_none_event());
   _added_to_loop = false;
   _loop->remove_channel(this);
 }
