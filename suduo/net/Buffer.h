@@ -7,13 +7,14 @@
 #include <string>
 #include <vector>
 
+#include "assert.h"
 #include "suduo/net/Endian.h"
 namespace suduo {
 namespace net {
 class Buffer {
  public:
-  static const size_t init_size = 1024;
-  static const size_t pre_append_size = 8;
+  static const size_t init_size;
+  static const size_t pre_append_size;
 
   explicit Buffer(size_t size = init_size)
       : _buffer(pre_append_size + init_size),
@@ -31,11 +32,11 @@ class Buffer {
 
   const char* find_EOL() const {
     const char* ptr = std::find(peek(), write_begin(), '\n');
-    return ptr;
+    return ptr == write_begin() ? nullptr : ptr;
   }
   const char* find_EOL(const char* start) const {
     const char* ptr = std::find(start, write_begin(), '\n');
-    return ptr;
+    return ptr == write_begin() ? nullptr : ptr;
   }
 
   void retrieve(size_t len) {
@@ -130,8 +131,9 @@ class Buffer {
     return sockets::network_to_host_32(data);
   }
   int16_t peek_int_16() const {
-    int16_t data;
-    std::memcpy(&data, peek(), sizeof(data));
+    assert(readable_bytes() >= sizeof(int16_t));
+    int16_t data = 0;
+    std::memcpy(&data, peek(), sizeof data);
     return sockets::network_to_host_16(data);
   }
   int8_t peek_int_8() const {
@@ -158,7 +160,12 @@ class Buffer {
     std::copy(d, d + len, begin() + read_index);
   }
 
-  void shrink() { _buffer.shrink_to_fit(); }
+  void shrink(size_t reserve) {
+    Buffer other;
+    other.ensure_writeable_bytes(readable_bytes() + reserve);
+    other.append(to_string());
+    swap(other);
+  }
 
   size_t internal_capacity() const { return _buffer.capacity(); }
 
@@ -172,6 +179,16 @@ class Buffer {
   char* write_begin() { return begin() + write_index; }
   const char* write_begin() const { return begin() + write_index; }
   ssize_t read_fd(int fd, int* saved_errno);
+
+  std::string to_string() const {
+    return std::string(peek(), readable_bytes());
+  }
+
+  void swap(Buffer& rhs) {
+    _buffer.swap(rhs._buffer);
+    std::swap(read_index, rhs.read_index);
+    std::swap(write_index, rhs.write_index);
+  }
 
  private:
   char* begin() { return &*_buffer.begin(); }

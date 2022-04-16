@@ -46,13 +46,12 @@ void PollPoller::fill_active_channels(int events_num,
 
 void PollPoller::update_channel(Channel* channel) {
   Poller::assert_in_loop_thread();
-  LOG_TRACE << "fd = " << channel->fd()
-            << " events = " << channel->event_size();
+  LOG_TRACE << "fd = " << channel->fd() << " events = " << channel->events();
   if (channel->index() < 0) {
     assert(_channels.find(channel->fd()) == _channels.end());
     pollfd pfd;
     pfd.fd = channel->fd();
-    pfd.events = channel->event_size();
+    pfd.events = channel->events();
     pfd.revents = 0;
     poll_fds.push_back(pfd);
     int idx = poll_fds.size() - 1;
@@ -66,7 +65,7 @@ void PollPoller::update_channel(Channel* channel) {
     struct pollfd& pfd = poll_fds[idx];
     assert(pfd.fd == channel->fd() || pfd.fd == -channel->fd() - 1);
     pfd.fd = channel->fd();
-    pfd.events = channel->event_size();
+    pfd.events = channel->events();
     pfd.revents = 0;
     if (channel->is_none_event()) {
       pfd.fd = -channel->fd() - 1;
@@ -84,7 +83,7 @@ void PollPoller::remove_channel(Channel* channel) {
   assert(0 <= idx && idx < static_cast<int>(poll_fds.size()));
   const struct pollfd& pfd = poll_fds[idx];
   //(void)pfd;
-  assert(pfd.fd == -channel->fd() - 1 && pfd.events == channel->event_size());
+  assert(pfd.fd == -channel->fd() - 1 && pfd.events == channel->events());
   size_t n = _channels.erase(channel->fd());
   assert(n == 1);
   //(void)n;

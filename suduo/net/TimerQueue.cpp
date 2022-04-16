@@ -7,8 +7,9 @@
 #include "suduo/net/EventLoop.h"
 #include "suduo/net/Timer.h"
 #include "suduo/net/TimerId.h"
-using namespace suduo;
+
 namespace suduo {
+inline void memZero(void* p, size_t n) { memset(p, 0, n); }
 namespace net {
 namespace detail {
 int create_timer_fd() {
@@ -45,8 +46,8 @@ void read_timer_fd(int timer_fd, Timestamp now) {
 void reset_timer_fd(int timer_fd, Timestamp expiration) {
   itimerspec new_value;
   itimerspec old_value;
-  // memZero(&new_value, sizeof new_value);
-  // memZero(&old_value, sizeof old_value);
+  memZero(&new_value, sizeof new_value);
+  memZero(&old_value, sizeof old_value);
   new_value.it_value = how_much_time_from_now(expiration);
   int ret = ::timerfd_settime(timer_fd, 0, &new_value, &old_value);
   if (ret) {
@@ -58,7 +59,7 @@ void reset_timer_fd(int timer_fd, Timestamp expiration) {
 }  // namespace detail
 }  // namespace net
 }  // namespace suduo
-
+using namespace suduo;
 using TimerQueue = suduo::net::TimerQueue;
 using namespace suduo::net::detail;
 

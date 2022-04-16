@@ -31,10 +31,10 @@ const sockaddr* sockets::sockaddr_cast(const sockaddr_in6* addr) {
 sockaddr* sockets::sockaddr_cast(sockaddr_in6* addr) {
   return static_cast<sockaddr*>(static_cast<void*>(addr));
 }
-const sockaddr_in* sockaddr_in_cast(const sockaddr* addr) {
+const sockaddr_in* sockets::sockaddr_in_cast(const sockaddr* addr) {
   return static_cast<const sockaddr_in*>(static_cast<const void*>(addr));
 }
-const sockaddr_in6* sockaddr_in6_cast(const sockaddr* addr) {
+const sockaddr_in6* sockets::sockaddr_in6_cast(const sockaddr* addr) {
   return static_cast<const sockaddr_in6*>(static_cast<const void*>(addr));
 }
 

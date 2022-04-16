@@ -11,8 +11,9 @@ class Logger {
  public:
   enum LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, FATAL };
 
-  explicit Logger(const char* source, int line);
-  explicit Logger(const char* source, int line, LogLevel level);
+  Logger(const char* source, int line);
+  Logger(const char* source, int line, LogLevel level);
+  Logger(const char* source, int line, LogLevel level, const char* func);
   Logger(const char* source, int line, bool to_abort);
 
   ~Logger();
@@ -26,7 +27,7 @@ class Logger {
 
   static void set_output_function(OutputFunc output_function);
   static void set_flush_function(FlushFunc flush_function);
-
+  static void set_log_level(Logger::LogLevel level);
   static LogLevel log_level();
 
  private:
@@ -40,11 +41,15 @@ extern Logger::LogLevel g_logLevel;
 
 inline Logger::LogLevel Logger::log_level() { return g_logLevel; }
 }  // namespace suduo
-#define LOG_TRACE \
-  suduo::Logger(__FILE__, __LINE__, suduo::Logger::TRACE).stream()
-#define LOG_DEBUG \
-  suduo::Logger(__FILE__, __LINE__, suduo::Logger::DEBUG).stream()
-#define LOG_INFO suduo::Logger(__FILE__, __LINE__, suduo::Logger::INFO).stream()
+#define LOG_TRACE                                         \
+  if (suduo::Logger::log_level() <= suduo::Logger::TRACE) \
+  suduo::Logger(__FILE__, __LINE__, suduo::Logger::TRACE, __func__).stream()
+#define LOG_DEBUG                                         \
+  if (suduo::Logger::log_level() <= suduo::Logger::DEBUG) \
+  suduo::Logger(__FILE__, __LINE__, suduo::Logger::DEBUG, __func__).stream()
+#define LOG_INFO                                         \
+  if (suduo::Logger::log_level() <= suduo::Logger::INFO) \
+  suduo::Logger(__FILE__, __LINE__).stream()
 #define LOG_WARN suduo::Logger(__FILE__, __LINE__, suduo::Logger::WARN).stream()
 #define LOG_ERROR \
   suduo::Logger(__FILE__, __LINE__, suduo::Logger::ERROR).stream()

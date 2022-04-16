@@ -10,6 +10,8 @@
 // namespace suduo
 
 using Buffer = suduo::net::Buffer;
+const size_t Buffer::init_size = 1024;
+const size_t Buffer::pre_append_size = 8;
 
 ssize_t Buffer::read_fd(int fd, int* saved_errno) {
   char extrabuf[65536];

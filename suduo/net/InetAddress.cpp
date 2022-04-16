@@ -6,6 +6,7 @@
 
 #include <array>
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <utility>
 #include <variant>
@@ -38,7 +39,7 @@ InetAddress::InetAddress(uint16_t port, bool loop_back_only, bool ipv6) {
 
 InetAddress::InetAddress(const char* ip, uint16_t port, bool ipv6) {
   // TODO check if 'ipv6' is false, but ip is in ipv6 form
-  if (ipv6) {
+  if (ipv6 || std::strchr(ip, ':')) {
     sockaddr_in6 addr_6;
     sockets::from_Ip_port(ip, port, &addr_6);
     _addr = std::move(addr_6);

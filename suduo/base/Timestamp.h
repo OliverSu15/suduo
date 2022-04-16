@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstdint>
 #include <ctime>
+#include <iostream>
 #include <string>
 #include <type_traits>
 
@@ -14,12 +15,13 @@ class Timestamp {
   using SystemClock = std::chrono::system_clock;
   using TimePoint = std::chrono::time_point<SystemClock>;
   using Seconds = std::chrono::seconds;
+  using Nanoseconds = std::chrono::nanoseconds;
   using Duration = std::chrono::duration<int64_t>;
   using string = std::string;
 
  public:
   Timestamp() = default;
-  explicit Timestamp(int64_t new_time) : _time_point(Seconds(new_time)) {}
+  explicit Timestamp(int64_t new_time) : _time_point(Nanoseconds(new_time)) {}
   explicit Timestamp(TimePoint& new_time) : _time_point(new_time) {}
   explicit Timestamp(TimePoint&& new_time) : _time_point(new_time) {}
   explicit Timestamp(Duration& new_time) : _time_point(new_time) {}
@@ -59,7 +61,8 @@ class Timestamp {
   }
   static Timestamp invalid() { return Timestamp(); }
   int64_t microSecondsSinceEpoch() {
-    return _time_point.time_since_epoch().count();
+    return ((_time_point.time_since_epoch().count()) /
+            (MICROSECOND_TO_NANOSECOND));
   }
 
  private:
@@ -83,8 +86,11 @@ inline double timeDifference(Timestamp high, Timestamp low) {
   return diff.count();  // nanosecond
 }
 inline Timestamp addTime(Timestamp timestamp, double seconds) {
-  int64_t delta = static_cast<int64_t>(seconds * SECOND_TO_NANOSECOND);
-  return Timestamp(timestamp.microSecondsSinceEpoch() + delta);
+  int64_t delta = static_cast<int64_t>(seconds * (SECOND_TO_MICROSECOND));
+  // return Timestamp(timestamp.microSecondsSinceEpoch() + delta);
+  // std::cout << delta << std::endl;
+  return Timestamp((timestamp.microSecondsSinceEpoch() + delta) *
+                   MICROSECOND_TO_NANOSECOND);
 }
 
 }  // namespace suduo

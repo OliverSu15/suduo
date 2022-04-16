@@ -49,7 +49,7 @@ Logger::Logger(const char* source, int line)
       _level(INFO) {
   _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
-  _stream << _time.to_string();
+  _stream << _time.to_string() << " ";
   _stream << Current_thread_info::tid_string() << " ";
   _stream << LogLevelName[_level] << " ";
 }
@@ -62,7 +62,7 @@ Logger::Logger(const char* source, int line, LogLevel level)
       _time(Timestamp::now()) {
   _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
-  _stream << _time.to_string();
+  _stream << _time.to_string() << " ";
   _stream << Current_thread_info::tid_string() << " ";
   _stream << LogLevelName[_level] << " ";
 }
@@ -75,9 +75,22 @@ Logger::Logger(const char* source, int line, bool to_abort)
       _time(Timestamp::now()) {
   _source = _source.substr(_source.find_last_of('/') + 1);
   Current_thread_info::tid();
-  _stream << _time.to_string();
+  _stream << _time.to_string() << " ";
   _stream << Current_thread_info::tid_string() << " ";
   _stream << LogLevelName[_level] << " ";
+}
+Logger::Logger(const char* source, int line, LogLevel level, const char* func)
+    : _source(source),
+      _line(line),
+      _level(level),
+      _stream(),
+      _time(Timestamp::now()) {
+  _source = _source.substr(_source.find_last_of('/') + 1);
+  Current_thread_info::tid();
+  _stream << _time.to_string() << " ";
+  _stream << Current_thread_info::tid_string() << " ";
+  _stream << LogLevelName[_level] << " ";
+  _stream << func << ' ';
 }
 
 Logger::~Logger() {
@@ -95,7 +108,7 @@ Logger::~Logger() {
 void Logger::operator<<(suduo::LogStream& stream) {
   _stream.append(stream.buffer().data(), stream.buffer().size());
 }
-
+void Logger::set_log_level(Logger::LogLevel level) { g_logLevel = level; }
 void Logger::set_output_function(OutputFunc output_function) {
   global_output = output_function;
 }
