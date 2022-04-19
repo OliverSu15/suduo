@@ -21,7 +21,7 @@ void benchPrintf(const char* fmt) {
   for (size_t i = 0; i < N; ++i) snprintf(buf, sizeof buf, fmt, (T)(i));
   Timestamp end(Timestamp::now());
 
-  printf("benchPrintf %f\n", timeDifference(end, start) / SECOND_TO_NANOSECOND);
+  printf("benchPrintf %f\n", (end - start).get_seconds_in_double());
 }
 
 template <typename T>
@@ -35,8 +35,7 @@ void benchStringStream() {
   }
   Timestamp end(Timestamp::now());
 
-  printf("benchStringStream %f\n",
-         timeDifference(end, start) / SECOND_TO_NANOSECOND);
+  printf("benchStringStream %f\n", (end - start).get_seconds_in_double());
 }
 
 template <typename T>
@@ -49,8 +48,7 @@ void benchLogStream() {
   }
   Timestamp end(Timestamp::now());
 
-  printf("benchLogStream %f\n",
-         timeDifference(end, start) / SECOND_TO_NANOSECOND);
+  printf("benchLogStream %f\n", (end - start).get_seconds_in_double());
 }
 
 int main() {

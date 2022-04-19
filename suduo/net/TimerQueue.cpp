@@ -21,8 +21,8 @@ int create_timer_fd() {
 }
 
 timespec how_much_time_from_now(Timestamp when) {
-  int64_t microseconds =
-      when.microSecondsSinceEpoch() - Timestamp::now().microSecondsSinceEpoch();
+  int64_t microseconds = when.get_microseconds_in_int64() -
+                         Timestamp::now().get_microseconds_in_int64();
   if (microseconds < 100) {
     microseconds = 100;
   }

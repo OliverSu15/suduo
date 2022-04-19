@@ -22,14 +22,15 @@ void benchmark() {
   }
   printf("%s\n", stamps.front().to_string().c_str());
   printf("%s\n", stamps.back().to_string().c_str());
-  printf("%f\n", timeDifference(stamps.back(), stamps.front()));
+  printf("%f\n", (stamps.back() - stamps.front()).get_seconds_in_double());
 
   int increments[100] = {0};
-  int64_t start = stamps.front().microSecondsSinceEpoch();
+  int64_t start = stamps.front().get_microseconds_in_int64();
   for (int i = 1; i < kNumber; ++i) {
-    int64_t next = stamps[i].microSecondsSinceEpoch();
+    int64_t next = stamps[i].get_microseconds_in_int64();
     int64_t inc = next - start;
     start = next;
+    // printf("%ld\n", start);
     if (inc < 0) {
       printf("reverse!\n");
     } else if (inc < 100) {

@@ -60,12 +60,12 @@ int main() {
   }
 
   printf("single thread without lock %f\n",
-         timeDifference(Timestamp::now(), start));
+         (Timestamp::now() - start).get_seconds_in_double());
 
   start = Timestamp::now();
   threadFunc();
   printf("single thread with lock %f\n",
-         timeDifference(Timestamp::now(), start));
+         (Timestamp::now() - start).get_seconds_in_double());
 
   for (int nthreads = 1; nthreads < kMaxThreads; ++nthreads) {
     std::vector<std::unique_ptr<Thread>> threads;
@@ -81,6 +81,6 @@ int main() {
       // printf("thread %d joined\n", i);
     }
     printf("%d thread(s) with lock %f\n", nthreads,
-           timeDifference(Timestamp::now(), start));
+           (Timestamp::now() - start).get_seconds_in_double());
   }
 }

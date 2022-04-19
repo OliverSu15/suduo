@@ -1,4 +1,4 @@
 #include "Timestamp.h"
-
-const char* const suduo::Timestamp::_time_format_string = "%F %T";
-const char* const suduo::Timestamp::_log_time_format_string = "%F-%T";
+using namespace suduo;
+const string Timestamp::_time_format_string = "%F %T";
+const string Timestamp::_log_time_format_string = "%F-%T";

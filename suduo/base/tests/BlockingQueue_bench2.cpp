@@ -35,9 +35,8 @@ class Bench {
     }
     startLatch_.wait();
     suduo::Timestamp started = suduo::Timestamp::now();
-    printf(
-        "all %zd threads started, %.3fms\n", threads_.size(),
-        1e3 * (timeDifference(started, start) / (suduo::SECOND_TO_NANOSECOND)));
+    printf("all %zd threads started, %.3fms\n", threads_.size(),
+           1e3 * ((started - start).get_seconds_in_double()));
   }
 
   void Run() {
@@ -46,8 +45,7 @@ class Bench {
     queues_[0]->push(rounds);
 
     auto done = done_.pop();
-    double elapsed =
-        timeDifference(done.second, start) / (suduo::SECOND_TO_NANOSECOND);
+    double elapsed = (done.second - start).get_seconds_in_double();
     printf("thread id=%d done, total %.3fms, %.3fus / round\n", done.first,
            1e3 * elapsed, 1e6 * elapsed / rounds);
   }
@@ -63,7 +61,7 @@ class Bench {
 
     suduo::Timestamp t2 = suduo::Timestamp::now();
     printf("all %zd threads joined, %.3fms\n", threads_.size(),
-           1e3 * (timeDifference(t2, stop) / (suduo::SECOND_TO_NANOSECOND)));
+           1e3 * ((t2 - stop).get_seconds_in_double()));
   }
 
  private:

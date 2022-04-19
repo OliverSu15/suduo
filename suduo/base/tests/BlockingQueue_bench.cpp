@@ -15,6 +15,14 @@
 
 bool g_verbose = false;
 
+// suduo::Timestamp invalid() {
+//   return suduo::Timestamp(suduo::Timestamp::Nanoseconds::zero());
+// }
+
+// bool valid(const suduo::Timestamp& time) {
+//   return time.get_Time_Point().time_since_epoch() !=
+//          suduo::Timestamp::Nanoseconds::zero();
+// }
 // Many threads, one queue.
 class Bench {
  public:
@@ -46,7 +54,7 @@ class Bench {
 
   void joinAll() {
     for (size_t i = 0; i < threads_.size(); ++i) {
-      queue_.push(suduo::Timestamp::invalid());
+      queue_.push(suduo::Timestamp::get_invalid());
     }
 
     for (auto& thr : threads_) {
@@ -69,8 +77,7 @@ class Bench {
       suduo::Timestamp t(queue_.pop());
       suduo::Timestamp now(suduo::Timestamp::now());
       if (t.valid()) {
-        int delay = static_cast<int>(timeDifference(now, t) /
-                                     suduo::MICROSECOND_TO_NANOSECOND);
+        int delay = static_cast<int>((now - t).get_microseconds_in_double());
         // printf("tid=%d, latency = %d us\n",
         //        suduo::CurrentThread::tid(), delay);
         ++delays[delay];

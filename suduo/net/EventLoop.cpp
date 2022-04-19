@@ -9,6 +9,7 @@
 #include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Logger.h"
 #include "suduo/base/Mutex.h"
+#include "suduo/base/Timestamp.h"
 #include "suduo/net/Channel.h"
 #include "suduo/net/Poller.h"
 #include "suduo/net/SocketOpt.h"
@@ -141,13 +142,15 @@ TimerID EventLoop::run_at(Timestamp time, TimerCallback cb) {
 
 TimerID EventLoop::run_after(double delay, TimerCallback cb) {
   // LOG_INFO << Timestamp::now().to_string();
-  Timestamp time(addTime(Timestamp::now(), delay));
+  // Timestamp time(addTime(Timestamp::now(), delay));
+  Timestamp time = Timestamp::now() + Timestamp::SecondsDouble(delay);
   // LOG_INFO << time.to_string();
   return run_at(time, std::move(cb));
 }
 
 TimerID EventLoop::run_every(double interval, TimerCallback cb) {
-  Timestamp time(addTime(Timestamp::now(), interval));
+  // Timestamp time(addTime(Timestamp::now(), interval));
+  Timestamp time = Timestamp::now() + Timestamp::SecondsDouble(interval);
   return _timer_queue->add_timer(std::move(cb), time, interval);
 }
 

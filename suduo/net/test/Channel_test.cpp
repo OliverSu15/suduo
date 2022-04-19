@@ -20,7 +20,7 @@ void print(const char* msg) {
   Timestamp now = Timestamp::now();
   printf("%s tid %d %s delay %f\n", now.to_string().c_str(),
          Current_thread_info::tid(), msg,
-         timeDifference(now, last) / (MICROSECOND_TO_NANOSECOND));
+         (now - last).get_microseconds_in_double());
   last = now;
 }
 
