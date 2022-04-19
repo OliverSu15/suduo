@@ -31,7 +31,7 @@ int foo() __attribute__((noinline));
 int g_count = 0;
 int foo() {
   MutexLockGuard lock(g_mutex);
-  if (!g_mutex.isLockedByThisThread()) {
+  if (!g_mutex.is_locked_by_this_thread()) {
     printf("FAIL\n");
     return -1;
   }
@@ -45,7 +45,7 @@ int main() {
   printf("sizeof Mutex: %zd\n", sizeof(MutexLock));
   printf("sizeof pthread_cond_t: %zd\n", sizeof(pthread_cond_t));
   // printf("sizeof Condition: %zd\n", sizeof(Condition));
-  MCHECK(foo());
+  ERROR_CHECK(foo());
   if (g_count != 1) {
     printf("MCHECK calls twice.\n");
     abort();

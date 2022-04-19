@@ -1,5 +1,6 @@
 #ifndef MUTEX_H
 #define MUTEX_H
+#include <asm-generic/errno-base.h>
 #include <pthread.h>
 #include <sched.h>
 
@@ -8,91 +9,65 @@
 
 #include "CurrentThreadInfo.h"
 #include "iostream"
+#include "suduo/base/Exception.h"
 #include "suduo/base/noncopyable.h"
-// only exist for muduo test
-// TODO remove
-#define MCHECK(ret)                                               \
-  ({                                                              \
-    __typeof__(ret) errnum = (ret);                               \
-    if (__builtin_expect(errnum != 0, 0))                         \
-      __assert_perror_fail(errnum, __FILE__, __LINE__, __func__); \
+#define ERROR_CHECK(ret)                                            \
+  ({                                                                \
+    __typeof__(ret) errnum = (ret);                                 \
+    if (__builtin_expect((errnum) != 0, 0))                         \
+      __assert_perror_fail((errnum), __FILE__, __LINE__, __func__); \
   })
+
 namespace suduo {
-// TODO can't copy can't move
 class MutexLock : noncopyable {
  public:
-  MutexLock() : holder(0) {
-    int errnum = pthread_mutex_init(&mutex, nullptr);
-    if (errnum) {
-      // TODO error handle
-    }
+  MutexLock() : _holder(0) {
+    ERROR_CHECK(pthread_mutex_init(&_mutex, nullptr));
   }
   ~MutexLock() {
-    // TODO 还是不太满意这个处理
-    assert(holder == 0);
-    int errnum = pthread_mutex_destroy(&mutex);
-    if (errnum) {
-      // TODO error handle
-    }
+    assert(_holder == 0);
+    ERROR_CHECK(pthread_mutex_destroy(&_mutex));
   }
 
   void lock() {
-    int errnum = pthread_mutex_lock(&mutex);
-    if (errnum) {
-      printf("wrong\n");
-      // TODO error handle
-    }
+    ERROR_CHECK(pthread_mutex_lock(&_mutex));
     set_holder();
   }
 
   void unlock() {
-    int errnum = pthread_mutex_unlock(&mutex);
-    if (errnum) {
-      printf("wrong\n");
-      // TODO error handle
-    }
+    ERROR_CHECK(pthread_mutex_unlock(&_mutex));
     unset_holder();
   }
-
+  // FIXME change name ?
+  //  used to check whether a mutex is locked
   bool try_lock() {
-    int errnum = pthread_mutex_trylock(&mutex);
-    if (errnum) {
-      // TODO error handle and return false if busy
+    if (pthread_mutex_trylock(&_mutex) != 0) {
+      return false;
     }
     set_holder();
     return true;
   }
   // must be called when the mutex is locked
-  // only exist for muduo test
-  // TODO remove
-  inline bool isLockedByThisThread() const {
-    return holder == Current_thread_info::tid();
+  inline bool is_locked_by_this_thread() const {
+    return _holder == Current_thread_info::tid();
   }
 
-  inline pthread_mutex_t* get_pthread_mutex() { return &mutex; }
+  inline void assert_locked() const { assert(is_locked_by_this_thread()); }
+
+  inline pthread_mutex_t* get_pthread_mutex() { return &_mutex; }
 
  private:
   // TODO may delete later
   friend class Condition;
-  class UnassignGuard {
-   public:
-    explicit UnassignGuard(MutexLock& mutex) : _mutex(mutex) {
-      _mutex.unset_holder();
-    }
-    ~UnassignGuard() { _mutex.set_holder(); }
 
-   private:
-    MutexLock& _mutex;
-  };
+  inline void set_holder() { _holder = Current_thread_info::tid(); }
+  inline void unset_holder() { _holder = 0; }
 
-  inline void set_holder() { holder = Current_thread_info::tid(); }
-  inline void unset_holder() { holder = 0; }
-
-  pthread_mutex_t mutex;
-  pid_t holder;
+  pthread_mutex_t _mutex;
+  pid_t _holder;
 };
 
-class MutexLockGuard {
+class MutexLockGuard : noncopyable {
  public:
   explicit MutexLockGuard(MutexLock& mutex) : _mutex(mutex) { _mutex.lock(); }
 

@@ -89,7 +89,7 @@ ThreadPool::Task ThreadPool::get_next_task() {
 }
 
 bool ThreadPool::is_full() const {
-  assert(_mutex.isLockedByThisThread());
+  _mutex.assert_locked();
   return max_queue_size > 0 && task_queue.size() >= max_queue_size;
 }
 

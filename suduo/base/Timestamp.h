@@ -1,7 +1,9 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
+#include <bits/types/struct_timespec.h>
 #include <bits/types/time_t.h>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstdint>
@@ -48,8 +50,8 @@ class Timestamp : copyable {
       : _time_point(other._time_point) {}
   Timestamp(const NsTimePoint& new_time) : _time_point(new_time) {}
   Timestamp(const Nanoseconds& new_time) : _time_point(new_time) {}
-  Timestamp(const MicrosecondsDouble& new_time)
-      : _time_point(std::chrono::duration_cast<Nanoseconds>(new_time)) {}
+  // explicit Timestamp(const MicrosecondsDouble& new_time)
+  //     : _time_point(std::chrono::duration_cast<Nanoseconds>(new_time)) {}
   Timestamp(const time_t& new_time) : Timestamp(from_unix_time(new_time)) {}
 
   ~Timestamp() = default;
@@ -67,6 +69,11 @@ class Timestamp : copyable {
   }
   static inline time_t to_unix_time(const Timestamp& time) {
     return SystemClock::to_time_t(time.get_Time_Point());
+  }
+  static inline timespec to_time_spec(const Timestamp& time) {
+    return {static_cast<time_t>(time.get_seconds_in_int64()),
+            static_cast<long>(time.get_nanoseconds_in_int64() %
+                              SECOND_TO_NANOSECOND)};
   }
 
   inline string format_string(const string& format) const {
@@ -91,10 +98,10 @@ class Timestamp : copyable {
   void operator+=(const Nanoseconds& duration) { _time_point += duration; }
   void operator-=(const Nanoseconds& duration) { _time_point -= duration; }
   void operator+=(const MicrosecondsDouble& duration) {
-    _time_point += Timestamp(duration).get_time_since_epoch();
+    _time_point += std::chrono::duration_cast<Nanoseconds>(duration);
   }
   void operator-=(const MicrosecondsDouble& duration) {
-    _time_point -= Timestamp(duration).get_time_since_epoch();
+    _time_point -= std::chrono::duration_cast<Nanoseconds>(duration);
   }
 
   Timestamp& operator=(const Timestamp& other) {
@@ -129,41 +136,47 @@ class Timestamp : copyable {
   friend inline bool operator==(const Timestamp& lhs, const Timestamp& rhs);
   friend inline bool operator!=(const Timestamp& lhs, const Timestamp& rhs);
 
-  inline int64_t get_hours_in_int64() { return get_val_in_int64<Hours>(); }
-  inline int64_t get_minutes_in_int64() { return get_val_in_int64<Mintues>(); }
-  inline int64_t get_seconds_in_int64() { return get_val_in_int64<Seconds>(); }
-  inline int64_t get_milliseconds_in_int64() {
+  inline int64_t get_hours_in_int64() const {
+    return get_val_in_int64<Hours>();
+  }
+  inline int64_t get_minutes_in_int64() const {
+    return get_val_in_int64<Mintues>();
+  }
+  inline int64_t get_seconds_in_int64() const {
+    return get_val_in_int64<Seconds>();
+  }
+  inline int64_t get_milliseconds_in_int64() const {
     return get_val_in_int64<Milliseconds>();
   }
-  inline int64_t get_microseconds_in_int64() {
+  inline int64_t get_microseconds_in_int64() const {
     return get_val_in_int64<Microseconds>();
   }
-  inline int64_t get_nanoseconds_in_int64() {
+  inline int64_t get_nanoseconds_in_int64() const {
     return get_val_in_int64<Nanoseconds>();
   }
 
-  inline double get_hours_in_double() {
+  inline double get_hours_in_double() const {
     return get_val_in_double<HoursDouble>();
   }
-  inline double get_minutes_in_double() {
+  inline double get_minutes_in_double() const {
     return get_val_in_double<MintuesDouble>();
   }
-  inline double get_seconds_in_double() {
+  inline double get_seconds_in_double() const {
     return get_val_in_double<SecondsDouble>();
   }
-  inline double get_milliseconds_in_double() {
+  inline double get_milliseconds_in_double() const {
     return get_val_in_double<MillisecondsDouble>();
   }
-  inline double get_microseconds_in_double() {
+  inline double get_microseconds_in_double() const {
     return get_val_in_double<MicrosecondsDouble>();
   }
 
   template <typename ToDuration>
-  inline double get_val_in_double() {
+  inline double get_val_in_double() const {
     return ToDuration(_time_point.time_since_epoch()).count();
   }
   template <typename ToDuration>
-  inline int64_t get_val_in_int64() {
+  inline int64_t get_val_in_int64() const {
     return (std::chrono::duration_cast<ToDuration>(
                 _time_point.time_since_epoch()))
         .count();
@@ -200,7 +213,8 @@ inline Timestamp operator-(const Timestamp& lhs,
 }
 inline Timestamp operator-(const Timestamp& lhs,
                            const Timestamp::MicrosecondsDouble& rhs) {
-  return {lhs.get_time_since_epoch() - Timestamp(rhs).get_time_since_epoch()};
+  return {lhs.get_time_since_epoch() -
+          std::chrono::duration_cast<Timestamp::Nanoseconds>(rhs)};
 }
 inline Timestamp operator-(const Timestamp& lhs, const Timestamp& rhs) {
   return {lhs.get_time_since_epoch() - rhs.get_time_since_epoch()};

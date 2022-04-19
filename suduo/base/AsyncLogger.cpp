@@ -7,6 +7,7 @@
 
 #include "suduo/base/LogFile.h"
 #include "suduo/base/Mutex.h"
+#include "suduo/base/Timestamp.h"
 using AsyncLogger = suduo::AsyncLogger;
 
 AsyncLogger::AsyncLogger(const std::string& filename, int64_t roll_size,
@@ -55,7 +56,8 @@ void AsyncLogger::thread_func() {
   while (_running) {
     MutexLockGuard lock(_mutex);
     if (_buffer_poll.empty()) {
-      _condition.time_wait(std::chrono::seconds(_flush_interval));
+      // TODO change it to correct
+      _condition.time_wait({Timestamp::Seconds(_flush_interval)});
     }
 
     _buffer_poll.push_back(std::move(current_buffer));
