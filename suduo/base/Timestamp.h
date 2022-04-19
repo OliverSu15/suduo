@@ -1,5 +1,6 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
+#include <bits/types/struct_timespec.h>
 #include <bits/types/time_t.h>
 
 #include <array>
@@ -68,6 +69,11 @@ class Timestamp : copyable {
   static inline time_t to_unix_time(const Timestamp& time) {
     return SystemClock::to_time_t(time.get_Time_Point());
   }
+  static inline timespec to_time_spec(const Timestamp& time) {
+    return {static_cast<time_t>(time.get_seconds_in_int64()),
+            static_cast<long>(time.get_nanoseconds_in_int64() %
+                              SECOND_TO_NANOSECOND)};
+  }
 
   inline string format_string(const string& format) const {
     std::array<char, 20> str{};
@@ -129,41 +135,47 @@ class Timestamp : copyable {
   friend inline bool operator==(const Timestamp& lhs, const Timestamp& rhs);
   friend inline bool operator!=(const Timestamp& lhs, const Timestamp& rhs);
 
-  inline int64_t get_hours_in_int64() { return get_val_in_int64<Hours>(); }
-  inline int64_t get_minutes_in_int64() { return get_val_in_int64<Mintues>(); }
-  inline int64_t get_seconds_in_int64() { return get_val_in_int64<Seconds>(); }
-  inline int64_t get_milliseconds_in_int64() {
+  inline int64_t get_hours_in_int64() const {
+    return get_val_in_int64<Hours>();
+  }
+  inline int64_t get_minutes_in_int64() const {
+    return get_val_in_int64<Mintues>();
+  }
+  inline int64_t get_seconds_in_int64() const {
+    return get_val_in_int64<Seconds>();
+  }
+  inline int64_t get_milliseconds_in_int64() const {
     return get_val_in_int64<Milliseconds>();
   }
-  inline int64_t get_microseconds_in_int64() {
+  inline int64_t get_microseconds_in_int64() const {
     return get_val_in_int64<Microseconds>();
   }
-  inline int64_t get_nanoseconds_in_int64() {
+  inline int64_t get_nanoseconds_in_int64() const {
     return get_val_in_int64<Nanoseconds>();
   }
 
-  inline double get_hours_in_double() {
+  inline double get_hours_in_double() const {
     return get_val_in_double<HoursDouble>();
   }
-  inline double get_minutes_in_double() {
+  inline double get_minutes_in_double() const {
     return get_val_in_double<MintuesDouble>();
   }
-  inline double get_seconds_in_double() {
+  inline double get_seconds_in_double() const {
     return get_val_in_double<SecondsDouble>();
   }
-  inline double get_milliseconds_in_double() {
+  inline double get_milliseconds_in_double() const {
     return get_val_in_double<MillisecondsDouble>();
   }
-  inline double get_microseconds_in_double() {
+  inline double get_microseconds_in_double() const {
     return get_val_in_double<MicrosecondsDouble>();
   }
 
   template <typename ToDuration>
-  inline double get_val_in_double() {
+  inline double get_val_in_double() const {
     return ToDuration(_time_point.time_since_epoch()).count();
   }
   template <typename ToDuration>
-  inline int64_t get_val_in_int64() {
+  inline int64_t get_val_in_int64() const {
     return (std::chrono::duration_cast<ToDuration>(
                 _time_point.time_since_epoch()))
         .count();
