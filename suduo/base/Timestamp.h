@@ -11,6 +11,7 @@
 #include <ratio>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/copyable.h"
@@ -43,40 +44,39 @@ class Timestamp : copyable {
 
   Timestamp() = default;
   Timestamp(const Timestamp& other) : _time_point(other._time_point) {}
-  Timestamp(Timestamp&& other) noexcept : _time_point(other._time_point) {}
-  explicit Timestamp(const NsTimePoint& new_time) : _time_point(new_time) {}
-  Timestamp(const NsTimePoint&& new_time) noexcept : _time_point(new_time) {}
-  explicit Timestamp(const Nanoseconds& new_time) : _time_point(new_time) {}
-  explicit Timestamp(const Nanoseconds&& new_time) noexcept
-      : _time_point(new_time) {}
-  explicit Timestamp(const MicrosecondsDouble& new_time)
+  Timestamp(const Timestamp&& other) noexcept
+      : _time_point(other._time_point) {}
+  Timestamp(const NsTimePoint& new_time) : _time_point(new_time) {}
+  Timestamp(const Nanoseconds& new_time) : _time_point(new_time) {}
+  Timestamp(const MicrosecondsDouble& new_time)
       : _time_point(std::chrono::duration_cast<Nanoseconds>(new_time)) {}
-  explicit Timestamp(time_t new_time) : Timestamp(from_unix_time(new_time)) {}
+  Timestamp(const time_t& new_time) : Timestamp(from_unix_time(new_time)) {}
 
   ~Timestamp() = default;
 
   void swap(Timestamp& that) { std::swap(that._time_point, _time_point); }
 
   inline const NsTimePoint& get_Time_Point() const { return _time_point; }
+  inline Nanoseconds get_time_since_epoch() const {
+    return _time_point.time_since_epoch();
+  }
 
   static Timestamp now() { return {SystemClock::now()}; }
   static inline Timestamp from_unix_time(const time_t& time) {
-    return Timestamp(SystemClock::from_time_t(time));
+    return {SystemClock::from_time_t(time)};
   }
   static inline time_t to_unix_time(const Timestamp& time) {
     return SystemClock::to_time_t(time.get_Time_Point());
   }
 
   inline string format_string(const string& format) const {
-    std::array<char, 20> str;
+    std::array<char, 20> str{};
     std::time_t tt_ = SystemClock::to_time_t(_time_point);
     std::tm* tm_ = std::localtime(&tt_);
     std::strftime(str.data(), 20, format.c_str(), tm_);
     return {str.data()};
   }
-
   inline string to_string() const { return format_string(_time_format_string); }
-
   inline string to_log_string() const {
     return format_string(_log_time_format_string);
   }
@@ -85,19 +85,49 @@ class Timestamp : copyable {
   inline bool valid() const {
     return _time_point.time_since_epoch() != Nanoseconds::zero();
   }
-  static Timestamp get_invalid() { return Timestamp(Nanoseconds::zero()); }
+  static Timestamp get_invalid() { return {Nanoseconds::zero()}; }
 
-  //运算符
+  // operators
   void operator+=(const Nanoseconds& duration) { _time_point += duration; }
   void operator-=(const Nanoseconds& duration) { _time_point -= duration; }
+  void operator+=(const MicrosecondsDouble& duration) {
+    _time_point += Timestamp(duration).get_time_since_epoch();
+  }
+  void operator-=(const MicrosecondsDouble& duration) {
+    _time_point -= Timestamp(duration).get_time_since_epoch();
+  }
 
   Timestamp& operator=(const Timestamp& other) {
-    if (this == &other) {
-      return *this;
+    if (this != &other) {
+      _time_point = other._time_point;
     }
+    return *this;
+  }
+  Timestamp& operator=(Timestamp&& other) noexcept {
     _time_point = other._time_point;
     return *this;
   }
+
+  friend inline Timestamp operator+(const Timestamp& lhs,
+                                    const Timestamp::Nanoseconds& rhs);
+  friend inline Timestamp operator+(const Timestamp& lhs,
+                                    const Timestamp::MicrosecondsDouble& rhs);
+  friend inline Timestamp operator+(const Timestamp::Nanoseconds& lhs,
+                                    const Timestamp& rhs);
+  friend inline Timestamp operator+(const Timestamp::MicrosecondsDouble& lhs,
+                                    const Timestamp& rhs);
+  friend inline Timestamp operator-(const Timestamp& lhs,
+                                    const Timestamp::Nanoseconds& rhs);
+  friend inline Timestamp operator-(const Timestamp& lhs,
+                                    const Timestamp::MicrosecondsDouble& rhs);
+  friend inline Timestamp operator-(const Timestamp& lhs, const Timestamp& rhs);
+
+  friend inline bool operator<(const Timestamp& lhs, const Timestamp& rhs);
+  friend inline bool operator<=(const Timestamp& lhs, const Timestamp& rhs);
+  friend inline bool operator>(const Timestamp& lhs, const Timestamp& rhs);
+  friend inline bool operator>=(const Timestamp& lhs, const Timestamp& rhs);
+  friend inline bool operator==(const Timestamp& lhs, const Timestamp& rhs);
+  friend inline bool operator!=(const Timestamp& lhs, const Timestamp& rhs);
 
   inline int64_t get_hours_in_int64() { return get_val_in_int64<Hours>(); }
   inline int64_t get_minutes_in_int64() { return get_val_in_int64<Mintues>(); }
@@ -128,15 +158,10 @@ class Timestamp : copyable {
     return get_val_in_double<MicrosecondsDouble>();
   }
 
-  inline Nanoseconds get_time_since_epoch() const {
-    return _time_point.time_since_epoch();
-  }
-
   template <typename ToDuration>
   inline double get_val_in_double() {
     return ToDuration(_time_point.time_since_epoch()).count();
   }
-
   template <typename ToDuration>
   inline int64_t get_val_in_int64() {
     return (std::chrono::duration_cast<ToDuration>(
@@ -150,13 +175,15 @@ class Timestamp : copyable {
   static const string _log_time_format_string;
 };
 
+// operators
+
 inline Timestamp operator+(const Timestamp& lhs,
                            const Timestamp::Nanoseconds& rhs) {
-  return {lhs.get_Time_Point() + rhs};
+  return {lhs._time_point + rhs};
 }
 inline Timestamp operator+(const Timestamp& lhs,
                            const Timestamp::MicrosecondsDouble& rhs) {
-  return lhs + Timestamp(rhs).get_time_since_epoch();
+  return lhs + std::chrono::duration_cast<Timestamp::Nanoseconds>(rhs);
 }
 inline Timestamp operator+(const Timestamp::Nanoseconds& lhs,
                            const Timestamp& rhs) {
@@ -169,31 +196,30 @@ inline Timestamp operator+(const Timestamp::MicrosecondsDouble& lhs,
 
 inline Timestamp operator-(const Timestamp& lhs,
                            const Timestamp::Nanoseconds& rhs) {
-  return {lhs.get_Time_Point() - rhs};
+  return {lhs._time_point - rhs};
 }
 inline Timestamp operator-(const Timestamp& lhs,
                            const Timestamp::MicrosecondsDouble& rhs) {
-  return Timestamp(lhs.get_time_since_epoch() -
-                   Timestamp(rhs).get_time_since_epoch());
+  return {lhs.get_time_since_epoch() - Timestamp(rhs).get_time_since_epoch()};
 }
 inline Timestamp operator-(const Timestamp& lhs, const Timestamp& rhs) {
-  return Timestamp(lhs.get_time_since_epoch() - rhs.get_time_since_epoch());
+  return {lhs.get_time_since_epoch() - rhs.get_time_since_epoch()};
 }
 
 inline bool operator<(const Timestamp& lhs, const Timestamp& rhs) {
-  return lhs.get_Time_Point() < rhs.get_Time_Point();
+  return lhs._time_point < rhs._time_point;
 }
 inline bool operator<=(const Timestamp& lhs, const Timestamp& rhs) {
-  return lhs.get_Time_Point() <= rhs.get_Time_Point();
+  return lhs._time_point <= rhs._time_point;
 }
 inline bool operator>(const Timestamp& lhs, const Timestamp& rhs) {
-  return lhs.get_Time_Point() > rhs.get_Time_Point();
+  return lhs._time_point > rhs._time_point;
 }
 inline bool operator>=(const Timestamp& lhs, const Timestamp& rhs) {
-  return lhs.get_Time_Point() >= rhs.get_Time_Point();
+  return lhs._time_point >= rhs._time_point;
 }
 inline bool operator==(const Timestamp& lhs, const Timestamp& rhs) {
-  return lhs.get_Time_Point() == rhs.get_Time_Point();
+  return lhs._time_point == rhs._time_point;
 }
 inline bool operator!=(const Timestamp& lhs, const Timestamp& rhs) {
   return !(lhs == rhs);
