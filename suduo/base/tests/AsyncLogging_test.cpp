@@ -32,9 +32,7 @@ void bench(bool longLog) {
       ++cnt;
     }
     suduo::Timestamp end = suduo::Timestamp::now();
-    printf("%f\n",
-           ((timeDifference(end, start) / suduo::MICROSECOND_TO_NANOSECOND) /
-            kBatch));
+    printf("%f\n", ((end - start).get_microseconds_in_double() / kBatch));
     struct timespec ts = {0, 500 * 1000 * 1000};
     nanosleep(&ts, NULL);
   }

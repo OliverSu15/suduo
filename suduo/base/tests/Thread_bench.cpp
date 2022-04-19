@@ -27,8 +27,7 @@ void threadFunc() {
 
 void threadFunc2(suduo::Timestamp start) {
   suduo::Timestamp now(suduo::Timestamp::now());
-  int delay = static_cast<int>(
-      (timeDifference(now, start) / (suduo::SECOND_TO_NANOSECOND)) * 1000000);
+  int delay = static_cast<int>((now - start).get_seconds_in_double() * 1000000);
   suduo::MutexLockGuard lock(g_mutex);
   ++g_delays[delay];
 }
@@ -48,8 +47,7 @@ void forkBench() {
     }
   }
 
-  double timeUsed = timeDifference(suduo::Timestamp::now(), start) /
-                    (suduo::SECOND_TO_NANOSECOND);
+  double timeUsed = (suduo::Timestamp::now() - start).get_seconds_in_double();
   printf("time elapsed %.3f seconds, process creation time used %.3f us\n",
          timeUsed, timeUsed * 1e6 / kProcesses);
   printf("number of created processes %d\n", kProcesses);
@@ -76,8 +74,7 @@ class Bench {
       thr->start();
     }
     startLatch_.wait();
-    double timeUsed = timeDifference(suduo::Timestamp::now(), start) /
-                      (suduo::SECOND_TO_NANOSECOND);
+    double timeUsed = (suduo::Timestamp::now() - start).get_seconds_in_double();
     printf("all %d threads started, %.3fms total, %.3fus per thread\n",
            numThreads, 1e3 * timeUsed, 1e6 * timeUsed / numThreads);
 
@@ -85,10 +82,8 @@ class Bench {
     if (g_verbose) {
       // for (const auto& [tid, ts] : queue)
       for (const auto& e : queue) {
-        printf(
-            "thread %d, %.0f us\n", e.first,
-            (timeDifference(e.second, start) / (suduo::SECOND_TO_NANOSECOND)) *
-                1e6);
+        printf("thread %d, %.0f us\n", e.first,
+               ((e.second - start).get_seconds_in_double()) * 1e6);
       }
     }
   }
@@ -102,14 +97,13 @@ class Bench {
 
     suduo::Timestamp t2 = suduo::Timestamp::now();
     printf("all %zd threads joined, %.3fms\n", threads_.size(),
-           1e3 * (timeDifference(t2, stop) / (suduo::SECOND_TO_NANOSECOND)));
+           1e3 * ((t2 - stop).get_seconds_in_double()));
     TimestampQueue::queue_type queue = done_.drain();
     if (g_verbose) {
       // for (const auto& [tid, ts] : queue)
       for (const auto& e : queue) {
         printf("thread %d, %.0f us\n", e.first,
-               (timeDifference(e.second, stop) / suduo::SECOND_TO_NANOSECOND) *
-                   1e6);
+               ((e.second - stop).get_seconds_in_double() * 1e6));
       }
     }
   }
@@ -143,8 +137,7 @@ int main(int argc, char* argv[]) {
     t1.join();
   }
 
-  double timeUsed = timeDifference(suduo::Timestamp::now(), start) /
-                    (suduo::SECOND_TO_NANOSECOND);
+  double timeUsed = (suduo::Timestamp::now(), start).get_seconds_in_double();
   printf("elapsed %.3f seconds, thread creation time %.3f us\n", timeUsed,
          timeUsed * 1e6 / kThreads);
   printf("number of created threads %d, g_count = %d\n",
