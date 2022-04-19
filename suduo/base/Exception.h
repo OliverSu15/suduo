@@ -20,5 +20,8 @@ class Exception : std::exception {
   std::string _message;
   std::string _stack_trace;
 };
+
+#define SUDUO_EXCEPTION_UNKNOW Exception("Unknow error")
+
 }  // namespace suduo
 #endif
