@@ -3,6 +3,7 @@
 #include <bits/types/struct_timespec.h>
 #include <bits/types/time_t.h>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstdint>
@@ -49,8 +50,8 @@ class Timestamp : copyable {
       : _time_point(other._time_point) {}
   Timestamp(const NsTimePoint& new_time) : _time_point(new_time) {}
   Timestamp(const Nanoseconds& new_time) : _time_point(new_time) {}
-  Timestamp(const MicrosecondsDouble& new_time)
-      : _time_point(std::chrono::duration_cast<Nanoseconds>(new_time)) {}
+  // explicit Timestamp(const MicrosecondsDouble& new_time)
+  //     : _time_point(std::chrono::duration_cast<Nanoseconds>(new_time)) {}
   Timestamp(const time_t& new_time) : Timestamp(from_unix_time(new_time)) {}
 
   ~Timestamp() = default;
@@ -97,10 +98,10 @@ class Timestamp : copyable {
   void operator+=(const Nanoseconds& duration) { _time_point += duration; }
   void operator-=(const Nanoseconds& duration) { _time_point -= duration; }
   void operator+=(const MicrosecondsDouble& duration) {
-    _time_point += Timestamp(duration).get_time_since_epoch();
+    _time_point += std::chrono::duration_cast<Nanoseconds>(duration);
   }
   void operator-=(const MicrosecondsDouble& duration) {
-    _time_point -= Timestamp(duration).get_time_since_epoch();
+    _time_point -= std::chrono::duration_cast<Nanoseconds>(duration);
   }
 
   Timestamp& operator=(const Timestamp& other) {
@@ -212,7 +213,8 @@ inline Timestamp operator-(const Timestamp& lhs,
 }
 inline Timestamp operator-(const Timestamp& lhs,
                            const Timestamp::MicrosecondsDouble& rhs) {
-  return {lhs.get_time_since_epoch() - Timestamp(rhs).get_time_since_epoch()};
+  return {lhs.get_time_since_epoch() -
+          std::chrono::duration_cast<Timestamp::Nanoseconds>(rhs)};
 }
 inline Timestamp operator-(const Timestamp& lhs, const Timestamp& rhs) {
   return {lhs.get_time_since_epoch() - rhs.get_time_since_epoch()};
