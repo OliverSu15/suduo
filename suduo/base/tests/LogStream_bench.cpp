@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <iostream>
 #include <sstream>
 
 #include "suduo/base/CurrentThreadInfo.h"
@@ -51,6 +52,19 @@ void benchLogStream() {
   printf("benchLogStream %f\n", (end - start).get_seconds_in_double());
 }
 
+template <typename T>
+void benchIOStream() {
+  Timestamp start(Timestamp::now());
+  std::ostream os(std::cout.rdbuf());
+  for (size_t i = 0; i < N; ++i) {
+    os << (T)(i);
+    os.seekp(0, std::ios_base::beg);
+  }
+  Timestamp end(Timestamp::now());
+
+  printf("benchIOStream %f\n", (end - start).get_seconds_in_double());
+}
+
 int main() {
   benchPrintf<int>("%d");
 
@@ -58,19 +72,23 @@ int main() {
   benchPrintf<int>("%d");
   benchStringStream<int>();
   benchLogStream<int>();
+  // benchIOStream<int>();
 
   puts("double");
   benchPrintf<double>("%.12g");
   benchStringStream<double>();
   benchLogStream<double>();
+  // benchIOStream<double>();
 
   puts("int64_t");
   benchPrintf<int64_t>("%" PRId64);
   benchStringStream<int64_t>();
   benchLogStream<int64_t>();
+  // benchIOStream<int64_t>();
 
   puts("void*");
   benchPrintf<void*>("%p");
   benchStringStream<void*>();
   benchLogStream<void*>();
+  // benchIOStream<void*>();
 }
