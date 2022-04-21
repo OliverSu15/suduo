@@ -3,8 +3,10 @@
 #include <array>
 #include <charconv>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <sstream>
 #include <string>
 #include <system_error>
 
@@ -18,39 +20,36 @@ class StreamBuffer : noncopyable {
   using BufferType = std::array<char, SIZE>;
 
  public:
-  StreamBuffer() : _current(_buffer.begin()) {}
+  StreamBuffer() : _current(0) {}
 
-  void append(std::string buf) {
+  void append(const string& buf) {
     if (availability() > buf.size()) {
-      std::move(buf.begin(), buf.end(), _current);
-      _current += buf.size();  // TODO change later
+      std::move(buf.begin(), buf.end(), (_buffer.begin() + _current));
+      _current += buf.size();
     }
   }
 
   void append(const char* buf, size_t len) {
     if (availability() > len) {
-      std::move(buf, buf + len, _current);
-      _current += len;  // TODO change later
+      std::move(buf, buf + len, current_ptr());
+      _current += len;
     }
   }
 
-  const char* data() const { return _buffer.data(); }
-  char* current_ptr() const { return _current; }
-  char* end() { return _buffer.end(); }
+  inline const char* data() const { return _buffer.data(); }
+  inline char* current_ptr() { return (_buffer.begin() + _current); }
+  inline char* end() { return _buffer.end(); }
+  inline size_t size() const { return (_current); }
+  inline size_t availability() const { return (_buffer.size() - _current); }
+  inline void move(size_t step) { _current += step; }
+  inline void reset() { _current = 0; }
+  inline void be_zero() { _buffer.fill(0); }
 
-  int size() const { return (_current - _buffer.begin()); }
-  int availability() const { return (_buffer.end() - _current); }
-
-  void move(int step) { _current += step; }  // TODO change later
-  void reset() { _current = _buffer.begin(); }
-
-  void be_zero() { _buffer.fill(0); }
-
-  std::string to_string() const { return std::string(_buffer.data(), size()); }
+  string to_string() const { return {_buffer.data(), size()}; }
 
  private:
   BufferType _buffer;
-  char* _current;
+  size_t _current;
 };
 
 class LogStream : noncopyable {
@@ -64,61 +63,64 @@ class LogStream : noncopyable {
 
   self& operator<<(int val) {
     auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val);
-    if (ec != std::errc()) std::printf("error\n");
+    if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
   self& operator<<(unsigned int val) {
     auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val);
-    if (ec != std::errc()) std::printf("error\n");
+    if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
   self& operator<<(long val) {
     auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val);
-    if (ec != std::errc()) std::printf("error\n");
+    if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
   self& operator<<(unsigned long val) {
     auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val);
-    if (ec != std::errc()) std::printf("error\n");
+    if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
   self& operator<<(long long val) {
     auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val);
-    if (ec != std::errc()) std::printf("error\n");
+    if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
   self& operator<<(unsigned long long val) {
     auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val);
-    if (ec != std::errc()) std::printf("error\n");
+    if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
 
   self& operator<<(float val) {
-    auto [ptr, ec] =
-        std::to_chars(_buffer.current_ptr(), _buffer.end(), val,
-                      std::chars_format::general, 12);  // TODO notsure
-    if (ec != std::errc()) std::printf("error\n");
+    auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val,
+                                   std::chars_format::general, 12);
+    if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
   self& operator<<(double val) {
-    auto [ptr, ec] =
-        std::to_chars(_buffer.current_ptr(), _buffer.end(), val,
-                      std::chars_format::general, 12);  // TODO notsure
-    if (ec != std::errc()) std::printf("error\n");
+    auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val,
+                                   std::chars_format::general, 12);
+    if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
 
   self& operator<<(const void* val) {
-    int len = snprintf(_buffer.current_ptr(), 42, "0x%X", val);
-    _buffer.move(len);
+    char* buf = _buffer.current_ptr();
+    buf[0] = '0';
+    buf[1] = 'x';
+    auto [ptr, ec] = std::to_chars(buf + 2, _buffer.end(),
+                                   reinterpret_cast<size_t>(val), 16);
+    if (ec != err) std::printf("error\n");  // FIXME change the output
+    _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
 
@@ -131,18 +133,9 @@ class LogStream : noncopyable {
     if (val) {
       _buffer.append(val, std::strlen(val));
     }
-    // printf("%X\n", _buffer.current_ptr());
     return *this;
   }
-  self& operator<<(std::string&& val) {
-    _buffer.append(std::move(val));
-    return *this;
-  }
-  self& operator<<(std::string& val) {
-    _buffer.append(val);
-    return *this;
-  }
-  self& operator<<(const std::string& val) {
+  self& operator<<(const string& val) {
     _buffer.append(val);
     return *this;
   }
@@ -151,14 +144,16 @@ class LogStream : noncopyable {
     return *this;
   }
 
-  void append(std::string& val) { _buffer.append(val); }
-  void append(const char* val, int len) { _buffer.append(val, len); }
+  inline void append(const string& val) { _buffer.append(val); }
+  inline void append(const char* val, int len) { _buffer.append(val, len); }
 
-  const Buffer& buffer() { return _buffer; }
-  void reset_buffer() { _buffer.reset(); }
+  inline const Buffer& buffer() const { return _buffer; }
+  inline void reset_buffer() { _buffer.reset(); }
 
  private:
+  // std::ostringstream stream;
   Buffer _buffer;
+  static const std::errc err;
 };
 
 }  // namespace suduo

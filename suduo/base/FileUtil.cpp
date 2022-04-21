@@ -12,10 +12,10 @@ FileAppender::FileAppender(const std::string& filename)
     : _fp(fopen(filename.c_str(), "ae")), _written_bytes(0), _buffer() {
   setbuf(_fp, _buffer.data());
 }
-FileAppender::FileAppender(const char* filename)
-    : _fp(fopen(filename, "ae")), _written_bytes(0), _buffer() {
-  setbuf(_fp, _buffer.data());
-}
+// FileAppender::FileAppender(const char* filename)
+//     : _fp(fopen(filename, "ae")), _written_bytes(0), _buffer() {
+//   setbuf(_fp, _buffer.data());
+// }
 
 FileAppender::~FileAppender() { std::fclose(_fp); }
 

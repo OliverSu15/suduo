@@ -13,13 +13,13 @@ LogFile::LogFile(const std::string& base_name, int64_t roll_size,
                  bool thread_safe, int flush_interval, int check_every_N)
     : _basename(base_name),
       _roll_size(roll_size),
-      _flush_interval(flush_interval),
-      _check_every_N(check_every_N),
+      _flush_interval(Timestamp::Seconds(flush_interval)),
+      _check_every_N_times(check_every_N),
       _count(0),
       _mutex(thread_safe ? new MutexLock : nullptr),
-      _start_of_period(0),
-      _last_roll(0),
-      _last_flush(0) {
+      _start_of_period(Timestamp::Seconds(0)),
+      _last_roll(Timestamp::Seconds(0)),
+      _last_flush(Timestamp::Seconds(0)) {
   roll_file();
 }
 
@@ -49,13 +49,13 @@ void LogFile::append_unlocked(const char* log, int len) {
     roll_file();
   } else {
     ++_count;
-    if (_count >= _check_every_N) {
+    if (_count >= _check_every_N_times) {
       _count = 0;
-      time_t now = ::time(NULL);
-      time_t thisPeriod_ = now / kRollPerSeconds_ * kRollPerSeconds_;
+      Timestamp now = Timestamp::now();
+      Timestamp thisPeriod_{Timestamp::Seconds(
+          now.get_seconds_in_int64() / roll_per_seconds_ * roll_per_seconds_)};
       if (thisPeriod_ != _start_of_period) {
         roll_file();
-
       } else if (now - _last_flush > _flush_interval) {
         _last_flush = now;
         _file->flush();
@@ -64,15 +64,13 @@ void LogFile::append_unlocked(const char* log, int len) {
   }
 }
 
-// TODO change later
 bool LogFile::roll_file() {
-  time_t now =
-      std::chrono::system_clock::to_time_t(Timestamp::now().get_Time_Point());
-  std::string filename = get_log_filename(_basename, Timestamp(now));
-
-  time_t start = now / kRollPerSeconds_ * kRollPerSeconds_;
+  Timestamp now = Timestamp::now();
+  Timestamp start{Timestamp::Seconds(now.get_seconds_in_int64() /
+                                     roll_per_seconds_ * roll_per_seconds_)};
 
   if (now > _last_roll) {
+    std::string filename = get_log_filename(_basename, now);
     _last_roll = now;
     _last_flush = now;
     _start_of_period = start;
@@ -83,9 +81,9 @@ bool LogFile::roll_file() {
 }
 
 std::string LogFile::get_log_filename(const std::string& basename,
-                                      Timestamp now) {
+                                      const Timestamp& now) {
   std::string filename;
-  filename.reserve(basename.size() + 64);  // TODO get a much accurate one later
+  filename.reserve(basename.size() + 32);
   filename += basename + ".";
   filename += now.to_log_string() + ".";
   filename += suduo::ProcessInfo::pid_string();

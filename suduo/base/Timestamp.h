@@ -50,9 +50,8 @@ class Timestamp : copyable {
       : _time_point(other._time_point) {}
   Timestamp(const NsTimePoint& new_time) : _time_point(new_time) {}
   Timestamp(const Nanoseconds& new_time) : _time_point(new_time) {}
-  // explicit Timestamp(const MicrosecondsDouble& new_time)
-  //     : _time_point(std::chrono::duration_cast<Nanoseconds>(new_time)) {}
-  Timestamp(const time_t& new_time) : Timestamp(from_unix_time(new_time)) {}
+  // explicit Timestamp(const time_t& new_time)
+  //     : Timestamp(from_unix_time(new_time)) {}
 
   ~Timestamp() = default;
 
@@ -183,6 +182,7 @@ class Timestamp : copyable {
   }
 
  private:
+  // Timestamp(const Nanoseconds& new_time) : _time_point(new_time) {}
   NsTimePoint _time_point;
   static const string _time_format_string;
   static const string _log_time_format_string;
@@ -192,7 +192,7 @@ class Timestamp : copyable {
 
 inline Timestamp operator+(const Timestamp& lhs,
                            const Timestamp::Nanoseconds& rhs) {
-  return {lhs._time_point + rhs};
+  return Timestamp(lhs._time_point + rhs);
 }
 inline Timestamp operator+(const Timestamp& lhs,
                            const Timestamp::MicrosecondsDouble& rhs) {
@@ -209,12 +209,12 @@ inline Timestamp operator+(const Timestamp::MicrosecondsDouble& lhs,
 
 inline Timestamp operator-(const Timestamp& lhs,
                            const Timestamp::Nanoseconds& rhs) {
-  return {lhs._time_point - rhs};
+  return Timestamp(lhs._time_point - rhs);
 }
 inline Timestamp operator-(const Timestamp& lhs,
                            const Timestamp::MicrosecondsDouble& rhs) {
-  return {lhs.get_time_since_epoch() -
-          std::chrono::duration_cast<Timestamp::Nanoseconds>(rhs)};
+  return Timestamp(lhs.get_time_since_epoch() -
+                   std::chrono::duration_cast<Timestamp::Nanoseconds>(rhs));
 }
 inline Timestamp operator-(const Timestamp& lhs, const Timestamp& rhs) {
   return {lhs.get_time_since_epoch() - rhs.get_time_since_epoch()};

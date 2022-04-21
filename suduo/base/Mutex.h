@@ -57,7 +57,6 @@ class MutexLock : noncopyable {
   inline pthread_mutex_t* get_pthread_mutex() { return &_mutex; }
 
  private:
-  // TODO may delete later
   friend class Condition;
 
   inline void set_holder() { _holder = Current_thread_info::tid(); }

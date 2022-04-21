@@ -1,5 +1,6 @@
 #ifndef LOGGER_H
 #define LOGGER_H
+#include <cstddef>
 #include <functional>
 
 #include "suduo/base/LogStream.h"
@@ -18,15 +19,19 @@ class Logger {
 
   ~Logger();
 
-  void operator<<(LogStream& stream);
-
   LogStream& stream() { return _stream; }
 
-  using OutputFunc = std::function<void(const char*, int)>;
+  using OutputFunc = std::function<void(const char*, size_t)>;
   using FlushFunc = std::function<void()>;
+  using PreOutputFunc = std::function<void(LogStream&, const string&, int,
+                                           LogLevel, const char*)>;
+  using PostOutputFUnc =
+      std::function<void(LogStream&, const string&, int, LogLevel)>;
 
   static void set_output_function(OutputFunc output_function);
   static void set_flush_function(FlushFunc flush_function);
+  static void set_pre_output_function(PreOutputFunc pre_output_function);
+  static void set_post_output_function(PostOutputFUnc post_output_function);
   static void set_log_level(Logger::LogLevel level);
   static LogLevel log_level();
 
@@ -37,9 +42,7 @@ class Logger {
   LogLevel _level;
   int _line;
 };
-extern Logger::LogLevel g_logLevel;
 
-inline Logger::LogLevel Logger::log_level() { return g_logLevel; }
 }  // namespace suduo
 #define LOG_TRACE                                         \
   if (suduo::Logger::log_level() <= suduo::Logger::TRACE) \
