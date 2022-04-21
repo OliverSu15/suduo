@@ -99,17 +99,15 @@ class LogStream : noncopyable {
   }
 
   self& operator<<(float val) {
-    auto [ptr, ec] =
-        std::to_chars(_buffer.current_ptr(), _buffer.end(), val,
-                      std::chars_format::general, 12);  // TODO notsure
+    auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val,
+                                   std::chars_format::general, 12);
     if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
   }
   self& operator<<(double val) {
-    auto [ptr, ec] =
-        std::to_chars(_buffer.current_ptr(), _buffer.end(), val,
-                      std::chars_format::general, 12);  // TODO notsure
+    auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val,
+                                   std::chars_format::general, 12);
     if (ec != err) std::printf("error\n");  // FIXME change the output
     _buffer.move(ptr - _buffer.current_ptr());
     return *this;
