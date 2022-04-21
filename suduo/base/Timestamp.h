@@ -15,9 +15,15 @@
 #include <type_traits>
 #include <utility>
 
-#include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/copyable.h"
 namespace suduo {
+static const int MICROSECOND_TO_NANOSECOND = 1000;   // na -> us
+static const int MILLISECOND_TO_MICROSECOND = 1000;  // us -> ms
+static const int SECOND_TO_MILLISECOND = 1000;       // ms -> s
+static const int SECOND_TO_MICROSECOND =
+    MILLISECOND_TO_MICROSECOND * SECOND_TO_MILLISECOND;  // us -> s
+static const int SECOND_TO_NANOSECOND =
+    SECOND_TO_MICROSECOND * MICROSECOND_TO_NANOSECOND;
 using string = std::string;
 class Timestamp : copyable {
  public:
