@@ -12,11 +12,11 @@ namespace FileUtil {
 class FileAppender : noncopyable {
  public:
   explicit FileAppender(const std::string& filename);
-  explicit FileAppender(const char* filename);
+  // explicit FileAppender(const char* filename);
   ~FileAppender();
   void append(const char* log, size_t len);
   void flush();
-  int64_t written_bytes() const { return _written_bytes; }
+  inline int64_t written_bytes() const { return _written_bytes; }
 
  private:
   size_t write(const char* log, size_t len);
