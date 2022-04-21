@@ -6,9 +6,8 @@
 namespace suduo {
 class CountDownLatch : noncopyable {
  public:
-  // TODO count can't smaller than 0
   explicit CountDownLatch(int count)
-      : _mutex(), _condition(_mutex) /*TODO not sure safe*/, _count(count) {}
+      : _mutex(), _condition(_mutex), _count(count) {}
 
   void wait() {
     MutexLockGuard lock(_mutex);
@@ -18,7 +17,7 @@ class CountDownLatch : noncopyable {
   void count_down() {
     MutexLockGuard lock(_mutex);
     _count--;
-    if (_count == 0) _condition.notifyAll();
+    if (_count <= 0) _condition.notifyAll();
   }
 
   int get_count() const {
