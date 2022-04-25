@@ -25,7 +25,7 @@ LogFile::LogFile(const std::string& base_name, int64_t roll_size,
 
 LogFile::~LogFile() = default;
 
-void LogFile::append(const char* log, int len) {
+void LogFile::append(const char* log, size_t len) {
   if (_mutex) {
     MutexLockGuard lock(*_mutex);
     append_unlocked(log, len);
@@ -43,7 +43,7 @@ void LogFile::flush() {
   }
 }
 
-void LogFile::append_unlocked(const char* log, int len) {
+void LogFile::append_unlocked(const char* log, size_t len) {
   _file->append(log, len);
   if (_file->written_bytes() > _roll_size) {
     roll_file();
