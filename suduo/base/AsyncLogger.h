@@ -43,7 +43,8 @@ class AsyncLogger : noncopyable {
   using Buffer = StreamBuffer<MAX_BUFFER_SIZE>;
   using BufferPtr = std::unique_ptr<Buffer>;
   using BufferPoll = std::vector<BufferPtr>;
-  const int Buffer_Poll_Size = 16;
+
+  static const int Buffer_Poll_Size = 16;
 
   const int _flush_interval;
   std::atomic_bool _running;
@@ -55,8 +56,8 @@ class AsyncLogger : noncopyable {
   CountDownLatch _latch;
   Condition _condition;
 
-  BufferPtr current_buffer;
-  BufferPtr next_buffer;
+  BufferPtr _current_buffer;
+  BufferPtr _next_buffer;
   BufferPoll _buffer_poll;
 };
 }  // namespace suduo

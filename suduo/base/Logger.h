@@ -12,10 +12,33 @@ class Logger {
  public:
   enum LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, FATAL };
 
-  Logger(const char* source, int line);
-  Logger(const char* source, int line, LogLevel level);
-  Logger(const char* source, int line, LogLevel level, const char* func);
-  Logger(const char* source, int line, bool to_abort);
+  class SourceFile {
+   public:
+    template <int N>
+    SourceFile(const char (&arr)[N]) : data_(arr), size_(N - 1) {
+      const char* slash = strrchr(data_, '/');  // builtin function
+      if (slash) {
+        data_ = slash + 1;
+        size_ -= static_cast<int>(data_ - arr);
+      }
+    }
+
+    explicit SourceFile(const char* filename) : data_(filename) {
+      const char* slash = strrchr(filename, '/');
+      if (slash) {
+        data_ = slash + 1;
+      }
+      size_ = static_cast<int>(strlen(data_));
+    }
+
+    const char* data_;
+    int size_;
+  };
+
+  Logger(SourceFile source, int line);
+  Logger(SourceFile source, int line, LogLevel level);
+  Logger(SourceFile source, int line, LogLevel level, const char* func);
+  Logger(SourceFile source, int line, bool to_abort);
 
   ~Logger();
 
@@ -23,10 +46,11 @@ class Logger {
 
   using OutputFunc = std::function<void(const char*, size_t)>;
   using FlushFunc = std::function<void()>;
-  using PreOutputFunc = std::function<void(LogStream&, const string&, int,
-                                           LogLevel, const char*)>;
-  using PostOutputFUnc =
-      std::function<void(LogStream&, const string&, int, LogLevel)>;
+  using PreOutputFunc =
+      std::function<void(LogStream&, const SourceFile&, int, const Timestamp&,
+                         LogLevel, const char*)>;
+  using PostOutputFUnc = std::function<void(LogStream&, const SourceFile&, int,
+                                            const Timestamp&, LogLevel)>;
 
   static void set_output_function(OutputFunc output_function);
   static void set_flush_function(FlushFunc flush_function);
@@ -38,7 +62,8 @@ class Logger {
  private:
   LogStream _stream;
   Timestamp _time;
-  string _source;
+  SourceFile _source;
+  // string _source;
   LogLevel _level;
   int _line;
 };

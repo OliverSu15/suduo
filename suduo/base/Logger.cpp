@@ -1,9 +1,12 @@
 #include "Logger.h"
 
+#include <sys/time.h>
+
 #include <array>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -15,10 +18,30 @@
 // namespace suduo
 using Logger = suduo::Logger;
 namespace suduo {
+__thread char thread_time[32];
+__thread time_t thread_lastSecond;
 
+inline LogStream& operator<<(LogStream& s, const Logger::SourceFile& v) {
+  s.append(v.data_, v.size_);
+  return s;
+}
+
+void time_to_string(const Timestamp& now) {
+  time_t seconds = now.get_seconds_in_int64();
+  if (seconds != thread_lastSecond) {
+    thread_lastSecond = seconds;
+    struct tm tm_time;
+    gmtime_r(&seconds, &tm_time);
+    int len =
+        snprintf(thread_time, 64, "%4d%02d%02d %02d:%02d:%02d",
+                 tm_time.tm_year + 1900, tm_time.tm_mon + 1, tm_time.tm_mday,
+                 tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec);
+    assert(len == 17);
+  }
+}
 // using namespace suduo::base;
-const std::array<std::string, 6> LogLevel_name = {"TRACE", "DEBUG", "INFO",
-                                                  "WARN",  "ERROR", "FATAL"};
+const char* LogLevel_name[6] = {"TRACE ", "DEBUG ", "INFO  ",
+                                "WARN  ", "ERROR ", "FATAL "};
 
 Logger::LogLevel initLogLevel() {
   if (::getenv("SUDUO_LOG_TRACE"))
@@ -34,14 +57,17 @@ void default_output(const char* val, size_t len) {
   // FIXME error handle
 }
 void default_flush() { fflush(stdout); }
-void default_pre_output(LogStream& stream, const string& source, int line,
-                        Logger::LogLevel level, const char* func) {
-  stream << suduo::Timestamp::now().to_string() << " ";
+void default_pre_output(LogStream& stream, const Logger::SourceFile& source,
+                        int line, const Timestamp& now, Logger::LogLevel level,
+                        const char* func) {
+  time_to_string(now);
+  stream << thread_time << " ";
   stream << Current_thread_info::tid_string() << " ";
-  stream << LogLevel_name.at(level) << " ";
+  stream << LogLevel_name[level];
   if (func != nullptr) stream << func << ' ';
 }
-void default_post_output(LogStream& stream, const string& source, int line,
+void default_post_output(LogStream& stream, const Logger::SourceFile& source,
+                         int line, const Timestamp& now,
                          Logger::LogLevel level) {
   stream << " -" << source << ":" << line << '\n';
 }
@@ -55,47 +81,43 @@ Logger::PostOutputFUnc global_post_output = default_post_output;
 
 Logger::LogLevel Logger::log_level() { return global_log_level; }
 
-Logger::Logger(const char* source, int line)
+Logger::Logger(SourceFile source, int line)
     : _source(source),
       _line(line),
       _time(Timestamp::now()),
       _stream(),
       _level(INFO) {
-  _source = _source.substr(_source.find_last_of('/') + 1);
-  global_pre_output(_stream, _source, _line, _level, nullptr);
+  global_pre_output(_stream, _source, _line, _time, _level, nullptr);
 }
 
-Logger::Logger(const char* source, int line, LogLevel level)
+Logger::Logger(SourceFile source, int line, LogLevel level)
     : _source(source),
       _line(line),
       _level(level),
       _stream(),
       _time(Timestamp::now()) {
-  _source = _source.substr(_source.find_last_of('/') + 1);
-  global_pre_output(_stream, _source, _line, _level, nullptr);
+  global_pre_output(_stream, _source, _line, _time, _level, nullptr);
 }
 
-Logger::Logger(const char* source, int line, bool to_abort)
+Logger::Logger(SourceFile source, int line, bool to_abort)
     : _source(source),
       _line(line),
       _level(to_abort ? FATAL : ERROR),
       _stream(),
       _time(Timestamp::now()) {
-  _source = _source.substr(_source.find_last_of('/') + 1);
-  global_pre_output(_stream, _source, _line, _level, nullptr);
+  global_pre_output(_stream, _source, _line, _time, _level, nullptr);
 }
-Logger::Logger(const char* source, int line, LogLevel level, const char* func)
+Logger::Logger(SourceFile source, int line, LogLevel level, const char* func)
     : _source(source),
       _line(line),
       _level(level),
       _stream(),
       _time(Timestamp::now()) {
-  _source = _source.substr(_source.find_last_of('/') + 1);
-  global_pre_output(_stream, _source, _line, _level, func);
+  global_pre_output(_stream, _source, _line, _time, _level, func);
 }
 
 Logger::~Logger() {
-  global_post_output(_stream, _source, _line, _level);
+  global_post_output(_stream, _source, _line, _time, _level);
   global_output(_stream.buffer().data(), _stream.buffer().size());
   if (_level == FATAL) {
     global_flush();

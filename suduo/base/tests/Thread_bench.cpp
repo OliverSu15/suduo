@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
     t1.join();
   }
 
-  double timeUsed = (suduo::Timestamp::now(), start).get_seconds_in_double();
+  double timeUsed = (suduo::Timestamp::now() - start).get_seconds_in_double();
   printf("elapsed %.3f seconds, thread creation time %.3f us\n", timeUsed,
          timeUsed * 1e6 / kThreads);
   printf("number of created threads %d, g_count = %d\n",

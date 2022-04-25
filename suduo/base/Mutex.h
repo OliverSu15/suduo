@@ -11,11 +11,19 @@
 #include "iostream"
 #include "suduo/base/Exception.h"
 #include "suduo/base/noncopyable.h"
+
+#ifndef NDEBUG
 #define ERROR_CHECK(ret)                                            \
   ({                                                                \
     __typeof__(ret) errnum = (ret);                                 \
     if (__builtin_expect((errnum) != 0, 0))                         \
       __assert_perror_fail((errnum), __FILE__, __LINE__, __func__); \
+  })
+#endif
+#define ERROR_CHECK(ret) \
+  ({                     \
+    int errnum = (ret);  \
+    assert(errnum == 0); \
   })
 
 namespace suduo {
@@ -48,19 +56,19 @@ class MutexLock : noncopyable {
     return true;
   }
   // must be called when the mutex is locked
-  inline bool is_locked_by_this_thread() const {
+  bool is_locked_by_this_thread() const {
     return _holder == Current_thread_info::tid();
   }
 
-  inline void assert_locked() const { assert(is_locked_by_this_thread()); }
+  void assert_locked() const { assert(is_locked_by_this_thread()); }
 
-  inline pthread_mutex_t* get_pthread_mutex() { return &_mutex; }
+  pthread_mutex_t* get_pthread_mutex() { return &_mutex; }
 
  private:
   friend class Condition;
 
-  inline void set_holder() { _holder = Current_thread_info::tid(); }
-  inline void unset_holder() { _holder = 0; }
+  void set_holder() { _holder = Current_thread_info::tid(); }
+  void unset_holder() { _holder = 0; }
 
   pthread_mutex_t _mutex;
   pid_t _holder;

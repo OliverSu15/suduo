@@ -20,26 +20,29 @@ AsyncLogger::AsyncLogger(const std::string& filename, int64_t roll_size,
       _thread(std::bind(&AsyncLogger::thread_func, this), "AsyncLogger"),
       _latch(1),
       _condition(_mutex), /*not sure is safe*/
-      current_buffer(new Buffer),
-      next_buffer(new Buffer),
+      _current_buffer(new Buffer),
+      _next_buffer(new Buffer),
       _buffer_poll() {
-  current_buffer->be_zero();
-  next_buffer->be_zero();
+  //_current_buffer->be_zero();
+  //_next_buffer->be_zero();
   _buffer_poll.reserve(Buffer_Poll_Size);
 }
 
 void AsyncLogger::append(const char* log, size_t len) {
   MutexLockGuard lock(_mutex);
-  if (current_buffer->availability() > len) {
-    current_buffer->append(log, len);
+  if (_current_buffer->availability() > len) {
+    _current_buffer->append(log, len);
   } else {
-    _buffer_poll.push_back(std::move(current_buffer));
-    if (next_buffer) {
-      current_buffer = std::move(next_buffer);
+    suduo::Timestamp start = suduo::Timestamp::now();
+    _buffer_poll.push_back(std::move(_current_buffer));
+    if (_next_buffer) {
+      _current_buffer = std::move(_next_buffer);
     } else {
-      current_buffer.reset(new Buffer);
+      _current_buffer.reset(new Buffer);
     }
-    current_buffer->append(log, len);
+    _current_buffer->append(log, len);
+    suduo::Timestamp end = suduo::Timestamp::now();
+    printf("~ %f\n", (end - start).get_microseconds_in_double());
     _condition.notify();
   }
 }
@@ -49,25 +52,35 @@ void AsyncLogger::thread_func() {
   LogFile log_file(_filename, _roll_size, false);
   BufferPtr new_buffer_1(new Buffer);
   BufferPtr new_buffer_2(new Buffer);
-  new_buffer_1->be_zero();
-  new_buffer_2->be_zero();
+  // new_buffer_1->be_zero();
+  // new_buffer_2->be_zero();
   BufferPoll buffer_to_write;
-  buffer_to_write.reserve(16);
+  buffer_to_write.reserve(Buffer_Poll_Size);
   while (_running) {
-    MutexLockGuard lock(_mutex);
-    if (_buffer_poll.empty()) {
-      // TODO change it to correct
-      _condition.time_wait({Timestamp::Seconds(_flush_interval)});
+    {
+      MutexLockGuard lock(_mutex);
+      if (_buffer_poll.empty()) {
+        _condition.time_wait(Timestamp::Seconds(_flush_interval) +
+                             Timestamp::now());
+      }
+
+      _buffer_poll.push_back(std::move(_current_buffer));
+      _current_buffer = std::move(new_buffer_1);
+      buffer_to_write.swap(_buffer_poll);
+
+      if (!_next_buffer) {
+        _next_buffer = std::move(new_buffer_2);
+      }
     }
-
-    _buffer_poll.push_back(std::move(current_buffer));
-    current_buffer = std::move(new_buffer_1);
-    buffer_to_write.swap(_buffer_poll);
-
-    if (!next_buffer) {
-      next_buffer = std::move(new_buffer_2);
+    if (buffer_to_write.size() > 25) {
+      char buf[256];
+      snprintf(
+          buf, sizeof buf, "Dropped log messages at %s, %zd larger buffers\n",
+          Timestamp::now().to_string().c_str(), buffer_to_write.size() - 2);
+      fputs(buf, stderr);
+      log_file.append(buf, static_cast<int>(strlen(buf)));
+      buffer_to_write.erase(buffer_to_write.begin() + 2, buffer_to_write.end());
     }
-
     for (const auto& i : buffer_to_write) {
       log_file.append(i->data(), i->size());
     }
