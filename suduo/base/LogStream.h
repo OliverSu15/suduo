@@ -1,5 +1,6 @@
 #ifndef LOG_STREAM_H
 #define LOG_STREAM_H
+#include <algorithm>
 #include <array>
 #include <charconv>
 #include <cstddef>
@@ -15,41 +16,33 @@
 namespace suduo {
 const int MIN_BUFFER_SIZE = 4000;
 const int MAX_BUFFER_SIZE = 4000 * 1000;
+
 template <int SIZE>
 class StreamBuffer : noncopyable {
-  using BufferType = std::array<char, SIZE>;
-
  public:
-  StreamBuffer() : _current(0) {}
+  StreamBuffer() : _current(_buffer), _end(_buffer + sizeof _buffer) {}
 
-  void append(const string& buf) {
-    if (availability() > buf.size()) {
-      std::move(buf.begin(), buf.end(), (_buffer.begin() + _current));
-      _current += buf.size();
-    }
-  }
-
-  void append(const char* buf, size_t len) {
+  inline void append(const char* buf, size_t len) {
     if (availability() > len) {
-      std::move(buf, buf + len, current_ptr());
+      memcpy(_current, buf, len);
       _current += len;
     }
   }
 
-  inline const char* data() const { return _buffer.data(); }
-  inline char* current_ptr() { return (_buffer.begin() + _current); }
-  inline char* end() { return _buffer.end(); }
-  inline size_t size() const { return (_current); }
-  inline size_t availability() const { return (_buffer.size() - _current); }
+  inline const char* data() const { return _buffer; }
+  inline char* current_ptr() { return (_current); }
+  inline size_t size() const { return (_current - _buffer); }
+  inline size_t availability() { return (_end - _current); }
   inline void move(size_t step) { _current += step; }
-  inline void reset() { _current = 0; }
-  inline void be_zero() { _buffer.fill(0); }
+  inline void reset() { _current = _buffer; }
 
-  string to_string() const { return {_buffer.data(), size()}; }
+  string to_string() const { return {_buffer, size()}; }
+  char* end() { return _end; }
 
  private:
-  BufferType _buffer;
-  size_t _current;
+  char _buffer[SIZE];
+  char* _current;
+  char* _end;
 };
 
 class LogStream : noncopyable {
@@ -57,14 +50,17 @@ class LogStream : noncopyable {
   using Buffer = suduo::StreamBuffer<MIN_BUFFER_SIZE>;
   using self = suduo::LogStream;
   self& operator<<(bool val) {
-    _buffer.append(val ? "true" : "false");
+    _buffer.append(val ? "true" : "false", val ? 4 : 5);
     return *this;
   }
 
   self& operator<<(int val) {
     auto [ptr, ec] = std::to_chars(_buffer.current_ptr(), _buffer.end(), val);
+
     if (ec != err) std::printf("error\n");  // FIXME change the output
+
     _buffer.move(ptr - _buffer.current_ptr());
+
     return *this;
   }
   self& operator<<(unsigned int val) {
@@ -131,12 +127,12 @@ class LogStream : noncopyable {
 
   self& operator<<(const char* val) {
     if (val) {
-      _buffer.append(val, std::strlen(val));
+      _buffer.append(val, strlen(val));
     }
     return *this;
   }
   self& operator<<(const string& val) {
-    _buffer.append(val);
+    _buffer.append(val.c_str(), val.size());
     return *this;
   }
   self& operator<<(Buffer val) {
@@ -144,7 +140,7 @@ class LogStream : noncopyable {
     return *this;
   }
 
-  inline void append(const string& val) { _buffer.append(val); }
+  // inline void append(const string& val) { _buffer.append(val); }
   inline void append(const char* val, int len) { _buffer.append(val, len); }
 
   inline const Buffer& buffer() const { return _buffer; }
