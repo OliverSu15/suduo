@@ -31,8 +31,7 @@ AsyncLogger::AsyncLogger(const std::string& filename, int64_t roll_size,
 void AsyncLogger::append(const char* log, size_t len) {
   MutexLockGuard lock(_mutex);
   if (_current_buffer->availability() > len) {
-    _current_buffer->append(log,
-                            len);  // TODO buffer的append speed is quite close
+    _current_buffer->append(log, len);
   } else {
     suduo::Timestamp start = suduo::Timestamp::now();
     _buffer_poll.push_back(std::move(_current_buffer));
