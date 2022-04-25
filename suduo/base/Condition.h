@@ -1,11 +1,13 @@
 #ifndef CONDITION_H
 #define CONDITION_H
+#include <asm-generic/errno.h>
 #include <bits/types/struct_timespec.h>
 #include <bits/types/time_t.h>
 #include <pthread.h>
 
 #include <chrono>
 #include <cstdint>
+#include <iostream>
 
 #include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Mutex.h"
@@ -29,11 +31,12 @@ class Condition : noncopyable {
     ERROR_CHECK(pthread_cond_wait(&cond, mutex.get_pthread_mutex()));
   }
 
-  void time_wait(Timestamp wait_time) {
+  bool time_wait(const Timestamp& wait_time) {
     timespec time = Timestamp::to_time_spec(wait_time);
     UnassignGuard ug(mutex);
-    ERROR_CHECK(
-        pthread_cond_timedwait(&cond, mutex.get_pthread_mutex(), &time));
+    int errnum =
+        pthread_cond_timedwait(&cond, mutex.get_pthread_mutex(), &time);
+    return ETIMEDOUT == errnum;  // FIXME error handle
   }
 
  private:
