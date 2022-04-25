@@ -57,9 +57,7 @@ void AsyncLogger::thread_func() {
   // new_buffer_2->be_zero();
   BufferPoll buffer_to_write;
   buffer_to_write.reserve(Buffer_Poll_Size);
-  // printf("s:%s\n", Timestamp::now().to_log_string().c_str());
   while (_running) {
-    // suduo::Timestamp start = suduo::Timestamp::now();
     {
       MutexLockGuard lock(_mutex);
       if (_buffer_poll.empty()) {
@@ -75,9 +73,6 @@ void AsyncLogger::thread_func() {
         _next_buffer = std::move(new_buffer_2);
       }
     }
-    // suduo::Timestamp end = suduo::Timestamp::now();
-    // printf("a:%f\n", ((end - start).get_microseconds_in_double()));
-    // printf("s:%s\n", Timestamp::now().to_log_string().c_str());
     if (buffer_to_write.size() > 25) {
       char buf[256];
       snprintf(
