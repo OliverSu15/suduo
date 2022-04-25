@@ -22,9 +22,8 @@ class CircularBuffer : noncopyable {
     if (end >= buffer.size()) end = 0;
     _size++;
   }
-
+  // like a STL container, pop on an empty buffer will cause unknown behavior
   T pop() {
-    if (empty()) throw;  // TODO throw an exception
     T val = buffer[begin++];
     if (begin >= buffer.size()) begin = 0;
     _size--;
