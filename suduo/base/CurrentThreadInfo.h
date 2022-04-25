@@ -1,6 +1,7 @@
 #ifndef CURRENT_THREAD_INFO_H
 #define CURRENT_THREAD_INFO_H
 #include <bits/types/struct_timespec.h>
+#include <pthread.h>
 #include <sys/syscall.h>
 #include <time.h>
 #include <unistd.h>
@@ -47,6 +48,23 @@ inline void sleep_us(int64_t us) {
 inline void sleep_ms(int64_t ms) { sleep_us(ms * MILLISECOND_TO_MICROSECOND); }
 
 inline const char* name() { return thread_name; }
+
+inline void after_fork() {
+  Current_thread_info::thread_cache_id = 0;
+  Current_thread_info::thread_name = "thread";
+  Current_thread_info::tid();
+}
+
+class ThreadIDNameInitializer {
+ public:
+  ThreadIDNameInitializer() {
+    Current_thread_info::thread_name = "thread";
+    Current_thread_info::tid();
+    pthread_atfork(nullptr, nullptr, &after_fork);
+  }
+};
+
+inline ThreadIDNameInitializer initer;
 
 std::string stack_trace(bool demangle);
 }  // namespace Current_thread_info
