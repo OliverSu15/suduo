@@ -25,12 +25,12 @@ inline void cache_thread_id() {
 inline int tid() {
   // TODO use __builtin_expect
   // TODO current cache ability don't work, try to find a new one
-  /*if (thread_cache_id == 0) */ cache_thread_id();
+  if (thread_cache_id == 0) cache_thread_id();
   return thread_cache_id;
 }
 // TODO make it can be called alone
 inline const char* tid_string() {
-  /*if (thread_cache_id == 0) */ cache_thread_id();
+  if (thread_cache_id == 0) cache_thread_id();
   return thread_tid_string;
 }
 
