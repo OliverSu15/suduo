@@ -24,8 +24,8 @@ class ThreadPool : noncopyable {
 
   void run(Task task);
   // call before call start()
-  void set_max_queue_size(int size) { max_queue_size = size; }
-  void set_thread_init_func(Task& task) { thread_init_task = task; }
+  void set_max_queue_size(int size) { _max_queue_size = size; }
+  void set_thread_init_func(Task task) { _thread_init_task = std::move(task); }
 
   size_t queue_size() const;
 
@@ -35,18 +35,18 @@ class ThreadPool : noncopyable {
   bool is_full() const;
 
   mutable MutexLock _mutex;
-  Condition not_full;
-  Condition not_empty;
+  Condition _not_full;
+  Condition _not_empty;
 
   std::string _name;
 
-  Task thread_init_task;
-  std::vector<std::unique_ptr<Thread>> thread_pool;
+  Task _thread_init_task;
+  std::vector<std::unique_ptr<Thread>> _thread_pool;
 
-  std::deque<Task> task_queue;
-  size_t max_queue_size;
+  std::deque<Task> _task_queue;
+  size_t _max_queue_size;
 
-  std::atomic_bool running;
+  std::atomic_bool _running;
 };
 }  // namespace suduo
 #endif
