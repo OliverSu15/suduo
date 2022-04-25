@@ -76,15 +76,17 @@ class Timestamp : copyable {
     return SystemClock::to_time_t(time.get_Time_Point());
   }
   static inline timespec to_time_spec(const Timestamp& time) {
-    return {static_cast<time_t>(time.get_seconds_in_int64()),
-            static_cast<long>(time.get_nanoseconds_in_int64() %
-                              SECOND_TO_NANOSECOND)};
+    timespec time_spec = {0, 0};
+    time_spec.tv_sec = static_cast<time_t>(time.get_seconds_in_int64());
+    time_spec.tv_nsec = static_cast<long>(time.get_nanoseconds_in_int64() %
+                                          SECOND_TO_NANOSECOND);
+    return time_spec;
   }
 
   inline string format_string(const string& format) const {
     std::array<char, 20> str{};
-    std::time_t tt_ = SystemClock::to_time_t(_time_point);
-    std::tm* tm_ = std::localtime(&tt_);
+    std::time_t timet = SystemClock::to_time_t(_time_point);
+    std::tm* tm_ = std::localtime(&timet);
     std::strftime(str.data(), 20, format.c_str(), tm_);
     return {str.data()};
   }
@@ -126,8 +128,8 @@ class Timestamp : copyable {
                                     const Timestamp::MicrosecondsDouble& rhs);
   friend inline Timestamp operator+(const Timestamp::Nanoseconds& lhs,
                                     const Timestamp& rhs);
-  friend inline Timestamp operator+(const Timestamp::MicrosecondsDouble& lhs,
-                                    const Timestamp& rhs);
+  // friend inline Timestamp operator+(const Timestamp::MicrosecondsDouble& lhs,
+  //                                   const Timestamp& rhs);
   friend inline Timestamp operator-(const Timestamp& lhs,
                                     const Timestamp::Nanoseconds& rhs);
   friend inline Timestamp operator-(const Timestamp& lhs,
@@ -208,10 +210,10 @@ inline Timestamp operator+(const Timestamp::Nanoseconds& lhs,
                            const Timestamp& rhs) {
   return rhs + lhs;
 }
-inline Timestamp operator+(const Timestamp::MicrosecondsDouble& lhs,
-                           const Timestamp& rhs) {
-  return rhs + lhs;
-}
+// inline Timestamp operator+(const Timestamp::MicrosecondsDouble& lhs,
+//                            const Timestamp& rhs) {
+//   return rhs + lhs;
+// }
 
 inline Timestamp operator-(const Timestamp& lhs,
                            const Timestamp::Nanoseconds& rhs) {
