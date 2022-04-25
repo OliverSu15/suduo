@@ -12,7 +12,7 @@
 off_t kRollSize = 500 * 1000 * 1000;
 
 suduo::AsyncLogger* g_asyncLog = NULL;
-
+double avg = 0;
 void asyncOutput(const char* msg, int len) { g_asyncLog->append(msg, len); }
 
 void bench(bool longLog) {
@@ -23,19 +23,19 @@ void bench(bool longLog) {
   suduo::string empty = " ";
   suduo::string longStr(3000, 'X');
   longStr += " ";
+  suduo::Timestamp start = suduo::Timestamp::now();
   for (int t = 0; t < 30; ++t) {
-    suduo::Timestamp start = suduo::Timestamp::now();
     for (int i = 0; i < kBatch; ++i) {
       LOG_INFO << "Hello 0123456789"
                << " abcdefghijklmnopqrstuvwxyz " << (longLog ? longStr : empty)
                << cnt;
       ++cnt;
     }
-    suduo::Timestamp end = suduo::Timestamp::now();
-    printf("%f\n", ((end - start).get_microseconds_in_double() / kBatch));
     struct timespec ts = {0, 500 * 1000 * 1000};
     nanosleep(&ts, NULL);
   }
+  suduo::Timestamp end = suduo::Timestamp::now();
+  printf("%f\n", ((end - start).get_seconds_in_double()));
 }
 
 int main(int argc, char* argv[]) {
@@ -49,7 +49,6 @@ int main(int argc, char* argv[]) {
   printf("pid = %d\n", getpid());
 
   char name[256] = {'\0'};
-
   strncpy(name, argv[0], sizeof name - 1);
   suduo::AsyncLogger log(::basename(name), kRollSize);
   log.start();
