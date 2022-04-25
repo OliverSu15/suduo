@@ -3,6 +3,8 @@
 #include <sched.h>
 #include <unistd.h>
 
+#include <array>
+#include <cassert>
 #include <charconv>
 #include <cstdint>
 #include <string>
@@ -13,12 +15,11 @@ namespace suduo {
 namespace ProcessInfo {
 inline pid_t pid() { return getpid(); }
 inline std::string pid_string() {
-  string buf;
-  buf.reserve(32);
-  auto [ptr, ec] = std::to_chars(buf.begin().base(), buf.end().base(),
-                                 static_cast<int>(pid()));
+  std::array<char, 32> buf;
+  auto [ptr, ec] =
+      std::to_chars(buf.begin(), buf.end(), static_cast<int>(pid()));
   if (ec != std::errc()) std::printf("error\n");  // FIXME change the output
-  return buf;
+  return {buf.begin(), ptr};
 }
 }  // namespace ProcessInfo
 }  // namespace suduo
