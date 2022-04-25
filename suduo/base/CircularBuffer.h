@@ -12,33 +12,33 @@ class CircularBuffer : noncopyable {
 
  public:
   explicit CircularBuffer(int max_size)
-      : begin(0), end(0), _size(0), buffer(max_size) {
-    buffer.shrink_to_fit();  // In case allocate more memory than we need
+      : _begin(0), _end(0), _size(0), _buffer(max_size) {
+    _buffer.shrink_to_fit();  // In case allocate more memory than we need
   }
 
   void push(const T& val) {
     if (full()) return;  // TODO throw an exception ?
-    buffer[end++] = val;
-    if (end >= buffer.size()) end = 0;
+    _buffer[_end++] = val;
+    if (_end >= _buffer.size()) _end = 0;
     _size++;
   }
   // like a STL container, pop on an empty buffer will cause unknown behavior
   T pop() {
-    T val = buffer[begin++];
-    if (begin >= buffer.size()) begin = 0;
+    T val = _buffer[_begin++];
+    if (_begin >= _buffer.size()) _begin = 0;
     _size--;
     return val;
   }
 
-  bool full() const { return _size == buffer.size(); }
+  bool full() const { return _size == _buffer.size(); }
   bool empty() const { return _size == 0; }
   int size() const { return _size; }
-  int capacity() const { return buffer.size() - size(); }
+  int capacity() const { return _buffer.size() - size(); }
 
  private:
-  BufferType buffer;
-  int begin;
-  int end;
+  BufferType _buffer;
+  int _begin;
+  int _end;
   int _size;
 };
 }  // namespace detail

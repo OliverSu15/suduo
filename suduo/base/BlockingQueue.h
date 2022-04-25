@@ -13,58 +13,50 @@ template <typename T>
 class BlockingQueue : noncopyable {
  public:
   using queue_type = std::deque<T>;
-  BlockingQueue() : mutex(), not_empty(mutex) /*TODO not sure safe*/, queue() {}
+  BlockingQueue() : _mutex(), _not_empty(_mutex), _queue() {}
 
   void push(const T& value) {
-    MutexLockGuard lock(mutex);
-    queue.push_back(value);
-    not_empty.notify();
+    MutexLockGuard lock(_mutex);
+    _queue.push_back(value);
+    _not_empty.notify();
   }
   void push(T&& value) {
-    MutexLockGuard lock(mutex);
-    queue.push_back(std::move(value));
-    not_empty.notify();
-    // push_times++;
-    //  std::printf("push:%d,pop:%d\n", push_times, pop_times);
+    MutexLockGuard lock(_mutex);
+    _queue.push_back(std::move(value));
+    _not_empty.notify();
   }
 
   T pop() {
-    MutexLockGuard lock(mutex);
-    while (queue.empty()) {
-      not_empty.wait();
+    MutexLockGuard lock(_mutex);
+    while (_queue.empty()) {
+      _not_empty.wait();
     }
-    T front(std::move(queue.front()));
-    queue.pop_front();
-    // pop_times++;
-    //  std::printf("push:%d,pop:%d\n", push_times, pop_times);
+    T front(std::move(_queue.front()));
+    _queue.pop_front();
     return front;
   }
 
   // TODO change the function name
   queue_type drain() {
     queue_type new_queue;
-
-    MutexLockGuard lock(mutex);
-    new_queue = std::move(queue);
-
+    MutexLockGuard lock(_mutex);
+    new_queue = std::move(_queue);
     return new_queue;
   }
 
   std::size_t size() const {
-    MutexLockGuard lock(mutex);
-    return queue.size();
+    MutexLockGuard lock(_mutex);
+    return _queue.size();
   }
   bool empty() const {
-    MutexLockGuard lock(mutex);
-    return queue.empty();
+    MutexLockGuard lock(_mutex);
+    return _queue.empty();
   }
 
  private:
-  mutable MutexLock mutex;
-  Condition not_empty;
-  queue_type queue;
-  // int pop_times;
-  // int push_times;
+  mutable MutexLock _mutex;
+  Condition _not_empty;
+  queue_type _queue;
 };
 
 }  // namespace suduo
