@@ -19,12 +19,13 @@
     if (__builtin_expect((errnum) != 0, 0))                         \
       __assert_perror_fail((errnum), __FILE__, __LINE__, __func__); \
   })
-#endif
+#else
 #define ERROR_CHECK(ret) \
   ({                     \
     int errnum = (ret);  \
     assert(errnum == 0); \
   })
+#endif
 
 namespace suduo {
 class MutexLock : noncopyable {
