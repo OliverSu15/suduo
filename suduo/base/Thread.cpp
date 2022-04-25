@@ -42,7 +42,7 @@ void run_thread_func(ThreadFunc& _func, pthread_t* _thread_id, pid_t* tid,
   }
 }
 void* run(void* it) {
-  std::shared_ptr<ThreadFunc> ptr(static_cast<ThreadFunc*>(it));
+  ThreadFunc* ptr(static_cast<ThreadFunc*>(it));
   (*ptr)();
   return nullptr;
 }
@@ -76,11 +76,11 @@ void Thread::start() {
   if (err) {
     _started = false;
     delete pfunc;
-    LOG_SYSFATAL << "Failed in pthread_create";
+    // LOG_SYSFATAL << "Failed in pthread_create";
   } else {
     _latch.wait();
     assert(_tid > 0);
-    LOG_DEBUG << "Thread create success";
+    // LOG_DEBUG << "Thread create success";
   }
 }
 
