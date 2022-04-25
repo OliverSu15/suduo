@@ -44,7 +44,7 @@ int main() {
   printf("sizeof pthread_mutex_t: %zd\n", sizeof(pthread_mutex_t));
   printf("sizeof Mutex: %zd\n", sizeof(MutexLock));
   printf("sizeof pthread_cond_t: %zd\n", sizeof(pthread_cond_t));
-  // printf("sizeof Condition: %zd\n", sizeof(Condition));
+  printf("sizeof Condition: %zd\n", sizeof(Condition));
   ERROR_CHECK(foo());
   if (g_count != 1) {
     printf("MCHECK calls twice.\n");
