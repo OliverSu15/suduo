@@ -1,5 +1,6 @@
 #ifndef _LOG_FILE_H
 #define _LOG_FILE_H
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -15,12 +16,12 @@ class LogFile : noncopyable {
           int flush_interval = 3, int check_every_N = 1024);
   ~LogFile();
 
-  void append(const char* log, int len);
+  void append(const char* log, size_t len);
   void flush();
   bool roll_file();
 
  private:
-  void append_unlocked(const char* log, int len);
+  void append_unlocked(const char* log, size_t len);
 
   static string get_log_filename(const string& basename, const Timestamp& now);
 
