@@ -23,7 +23,7 @@ class InetAddress : public suduo::copyable {
   explicit InetAddress(const sockaddr_in& addr) : _addr(addr) {}
   explicit InetAddress(const sockaddr_in6& addr) : _addr(addr) {}
 
-  InetAddress() {}
+  InetAddress() = default;
 
   sa_family_t family() const;
   std::string to_Ip() const;
@@ -36,6 +36,7 @@ class InetAddress : public suduo::copyable {
     }
     return sockets::sockaddr_cast(&(std::get<sockaddr_in6>(_addr)));
   };
+
   void set_sock_addr_inet6(const sockaddr_in6& addr_6) { _addr = addr_6; }
 
   uint32_t ipv4_net_endian() const;
