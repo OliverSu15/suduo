@@ -10,6 +10,7 @@ class EPollPoller : public Poller {
  public:
   EPollPoller(EventLoop* loop);
   ~EPollPoller() override;
+
   Timestamp poll(int timeout_ms, ChannelList* active_channels) override;
 
   void update_channel(Channel* channel) override;
@@ -25,7 +26,8 @@ class EPollPoller : public Poller {
   void update(int operation, Channel* channel);
 
   using EventList = std::vector<epoll_event>;
-  int epoll_fd;
+
+  int _epoll_fd;
   EventList _events;
 };
 }  // namespace net

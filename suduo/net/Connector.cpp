@@ -60,7 +60,7 @@ void Connector::stop_in_loop() {
 }
 
 void Connector::connect() {
-  int sock_fd = sockets::create_Nonblocking_or_abort(_server_addr.family());
+  int sock_fd = sockets::create_nonblocking_or_abort(_server_addr.family());
   int ret = sockets::connect(sock_fd, _server_addr.get_sock_addr());
   int saved_errno = (ret == 0) ? 0 : errno;
   switch (saved_errno) {

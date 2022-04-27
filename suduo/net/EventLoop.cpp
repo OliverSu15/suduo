@@ -141,10 +141,7 @@ TimerID EventLoop::run_at(Timestamp time, TimerCallback cb) {
 }
 
 TimerID EventLoop::run_after(double delay, TimerCallback cb) {
-  // LOG_INFO << Timestamp::now().to_string();
-  // Timestamp time(addTime(Timestamp::now(), delay));
   Timestamp time = Timestamp::now() + Timestamp::SecondsDouble(delay);
-  // LOG_INFO << time.to_string();
   return run_at(time, std::move(cb));
 }
 
