@@ -12,7 +12,7 @@ class InetAddress;
 class Socket : noncopyable {
  public:
   explicit Socket(int sock_fd) : _sock_fd(sock_fd) {}
-  explicit Socket(Socket&& socket) : _sock_fd(socket._sock_fd) {}
+  // Socket(Socket& socket) : _sock_fd(socket._sock_fd) {}
   ~Socket();
 
   int fd() const { return _sock_fd; }
@@ -20,11 +20,11 @@ class Socket : noncopyable {
   bool get_Tcp_info(tcp_info* info) const;
   bool get_Tcp_info_string(char* buf, int len) const;
 
-  void bind_address(const InetAddress& local_addr);
-  void listen();
-  int accept(InetAddress* peer_addr);
+  void bind_address(const InetAddress& local_addr) const;
+  void listen() const;
+  int accept(InetAddress* peer_addr) const;
 
-  void shutdown_write();
+  void shutdown_write() const;
 
   void set_Tcp_no_delay(bool on);
   void set_reuse_addr(bool on);
