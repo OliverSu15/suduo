@@ -1,5 +1,6 @@
 #ifndef CHANNEL_H
 #define CHANNEL_H
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <utility>
@@ -29,7 +30,7 @@ class Channel : noncopyable {
 
   int fd() const { return _fd; }
   int events() const { return _events; }
-  void set_revents(int revt) { _revents = revt; }
+  void set_revents(uint32_t revt) { _revents = revt; }
   bool is_none_event() const { return _events == none_event; }
 
   void enable_reading() {
@@ -56,7 +57,7 @@ class Channel : noncopyable {
   bool is_writing() const { return _events & write_event; }
   bool is_reading() const { return _events & read_event; }
 
-  int index() { return _index; }
+  int index() const { return _index; }
   void set_index(int pos) { _index = pos; }
 
   std::string revents_to_string() const;

@@ -20,8 +20,10 @@ class PollPoller : public Poller {
 
  private:
   using PollFdList = std::vector<pollfd>;
+
   void fill_active_channels(int events_num, ChannelList* active_channels) const;
-  PollFdList poll_fds;
+
+  PollFdList _poll_fds;
 };
 }  // namespace net
 }  // namespace suduo
