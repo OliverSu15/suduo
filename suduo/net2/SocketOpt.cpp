@@ -29,6 +29,16 @@ int sockets::accept(int sockfd, sockaddr_in6* addr) {
   return connection_fd;
 }
 
+int sockets::accept(int sockfd, sockaddr_in* addr) {
+  socklen_t len = addr_len;
+  int connection_fd =
+      accept4(sockfd, sockaddr_cast(addr), &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
+  if (connection_fd < 0) {
+    LOG_SYSFATAL << "sockets::accept";
+  }
+  return connection_fd;
+}
+
 void sockets::to_Ip_port(char* buf, size_t size, const sockaddr* addr) {
   if (addr->sa_family == AF_INET6) {
     buf[0] = '[';
