@@ -18,7 +18,7 @@ class Socket : noncopyable {
   int fd() const { return _sock_fd; }
 
   bool get_TCP_info(tcp_info* info) const;
-  // test usage only
+
   bool get_TCP_info_string(char* buf, int len) const;
 
   void bind(const InetAddress& local_addr) const {
@@ -43,7 +43,8 @@ class Socket : noncopyable {
     return conn_fd;
   }
 
-  int set_sock_opt(int level, int opt_name, const void* val, socklen_t len) {
+  int set_sock_opt(int level, int opt_name, const void* val,
+                   socklen_t len) const {
     return ::setsockopt(_sock_fd, level, opt_name, val, len);
   }
 
