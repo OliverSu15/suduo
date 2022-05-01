@@ -4,6 +4,6 @@ target_link_libraries(suduo_net2 suduo_base)
 install(TARGETS suduo_net2 DESTINATION lib)
 
 file(GLOB HEADERS "*.h")
-install(FILES ${HEADERS} DESTINATION include/suduo/net)
+install(FILES ${HEADERS} DESTINATION include/suduo/net2)
 
 # add_subdirectory(test)
