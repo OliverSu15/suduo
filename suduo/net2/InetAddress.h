@@ -43,6 +43,11 @@ class InetAddress : public copyable {
     return sockets::sockaddr_cast(&(std::get<sockaddr_in6>(_addr)));
   };
 
+  void set_sock_addr(const sockaddr_in6& addr) { _addr = addr; }
+  void set_sock_addr(const sockaddr_in& addr) { _addr = _addr; }
+
+  bool is_ipv6() const { return _addr.index() == 1; }
+
   static bool resolve(const std::string& hostname, InetAddress& result);
 
  private:
