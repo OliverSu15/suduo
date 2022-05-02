@@ -44,7 +44,7 @@ class InetAddress : public copyable {
   };
 
   void set_sock_addr(const sockaddr_in6& addr) { _addr = addr; }
-  void set_sock_addr(const sockaddr_in& addr) { _addr = _addr; }
+  void set_sock_addr(const sockaddr_in& addr) { _addr = addr; }
 
   bool is_ipv6() const { return _addr.index() == 1; }
 
