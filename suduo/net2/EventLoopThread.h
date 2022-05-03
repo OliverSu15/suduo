@@ -23,7 +23,6 @@ class EventLoopThread : noncopyable {
   void thread_func();
 
   EventLoop* _loop;
-  bool _exiting;
   Thread _thread;
   MutexLock _mutex;
   Condition _cond;
