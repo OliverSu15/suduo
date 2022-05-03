@@ -70,6 +70,9 @@ class Channel : noncopyable {
   string revents_to_string() const;
   string events_to_string() const;
 
+  int index() const { return _index; }
+  void set_index(int pos) { _index = pos; }
+
  private:
   static std::string events_to_string(int fd, int ev);
 
@@ -85,6 +88,8 @@ class Channel : noncopyable {
   EventLoop* _loop;
   Poller* _poller;
   const int _fd;
+
+  int _index;
 
   uint32_t _events;
   uint32_t _revents;

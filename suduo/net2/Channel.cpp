@@ -13,6 +13,7 @@ Channel::Channel(EventLoop* loop, int fd, Poller* poller)
       _poller(poller),
       _events(0),
       _revents(0),
+      _index(-1),
       _log_hup(true),
       _tied(false),
       _event_handling(false) {}
