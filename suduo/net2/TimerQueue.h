@@ -34,6 +34,8 @@ class TimerQueue : noncopyable {
   void handle_read();
   bool insert(std::unique_ptr<Timer> timer);
   void reset(std::vector<std::unique_ptr<Timer>>& expired, Timestamp now);
+  void cancel_in_loop(uint64_t timer_id);
+  void add_timer_in_loop(std::unique_ptr<Timer>& timer);
 
   EventLoop* _loop;
   const int _timer_fd;

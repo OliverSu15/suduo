@@ -26,7 +26,6 @@ EPollPoller::~EPollPoller() { close(_epoll_fd); }
 
 Timestamp EPollPoller::poll(int timeout_ms, ChannelList* active_channels) {
   LOG_TRACE << "fd total count " << _channels.size();
-
   int event_nums =
       epoll_wait(_epoll_fd, _events.data(), _events.size(), timeout_ms);
 
@@ -36,7 +35,7 @@ Timestamp EPollPoller::poll(int timeout_ms, ChannelList* active_channels) {
   if (event_nums > 0) {
     LOG_TRACE << event_nums << " events happened";
 
-    fill_active_channels(active_channels);
+    fill_active_channels(event_nums, active_channels);
     if (event_nums == _events.size()) {
       _events.reserve(_events.size() * 2);
     }
@@ -51,10 +50,12 @@ Timestamp EPollPoller::poll(int timeout_ms, ChannelList* active_channels) {
   return now;
 }
 
-void EPollPoller::fill_active_channels(ChannelList* active_channels) const {
-  for (auto i : _events) {
-    Channel* channel = static_cast<Channel*>(i.data.ptr);
-    channel->set_revents(i.events);
+void EPollPoller::fill_active_channels(int event_num,
+                                       ChannelList* active_channels) const {
+  for (int i = 0; i < event_num; i++) {
+    Channel* channel = static_cast<Channel*>(_events[i].data.ptr);
+    channel->set_revents(_events[i].events);
+    // LOG_WARN << "HERE";
     active_channels->push_back(channel);
   }
 }

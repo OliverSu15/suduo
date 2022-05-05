@@ -24,7 +24,7 @@ class EPollPoller : public Poller {
   static const int init_event_list_size = 16;
   static const char* operation_to_string(int op);
 
-  void fill_active_channels(ChannelList* active_channels) const;
+  void fill_active_channels(int event_num, ChannelList* active_channels) const;
 
   void update(int operation, Channel* channel);
 

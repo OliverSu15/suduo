@@ -85,10 +85,26 @@ uint64_t TimerQueue::add_timer(TimerCallback cb, const Timestamp& when,
   if (earlies_changed) {
     reset_timer_fd(_timer_fd, expertion_time);
   }
+  //_loop->run_in_loop(std::bind(&TimerQueue::add_timer_in_loop, this, timer));
   return id;
 }
 
+// void TimerQueue::add_timer_in_loop(std::unique_ptr<Timer>& timer) {
+//   _loop->assert_in_loop_thread();
+//   bool earlies_changed = insert(std::move(timer));
+//   if (earlies_changed) {
+//     reset_timer_fd(_timer_fd, timer->expertion_time());
+//   }
+// }
+
 void TimerQueue::cancel(uint64_t timer_id) {
+  _loop->queue_in_loop(
+      std::bind(&TimerQueue::cancel_in_loop, this,
+                timer_id));  // don't run_in_loop(), it may erase itself
+}
+
+void TimerQueue::cancel_in_loop(uint64_t timer_id) {
+  _loop->assert_in_loop_thread();
   auto it = _active_timers.find(timer_id);
   if (it != _active_timers.end()) {
     // auto timers_it = _timers.find({it->second->expertion_time(), it->first});
@@ -102,8 +118,8 @@ void TimerQueue::cancel(uint64_t timer_id) {
 }
 
 bool TimerQueue::insert(std::unique_ptr<Timer> timer) {
-  _loop->assert_in_loop_thread();
-
+  //_loop->assert_in_loop_thread();
+  //
   assert(_timers.size() == _active_timers.size());
 
   bool earliestChanged = false;
@@ -130,6 +146,7 @@ bool TimerQueue::insert(std::unique_ptr<Timer> timer) {
 
 void TimerQueue::handle_read() {
   _loop->assert_in_loop_thread();
+
   Timestamp now = Timestamp::now();
 
   read_timer_fd(_timer_fd, now);
@@ -137,19 +154,20 @@ void TimerQueue::handle_read() {
   // std::vector<Entry> expired = get_expired(now);
   auto iter = _timers.lower_bound({now, UINT64_MAX});
   std::vector<std::unique_ptr<Timer>> expired;
-  if (iter != _timers.end()) {
-    _calling_expired_timers = true;
-    _canceling_timers.clear();
-    auto ptr = _timers.begin();
-    while (ptr != iter) {
-      ptr->second->run();
-      _active_timers.erase(ptr->first.second);
-      expired.push_back(std::move(ptr->second));
-      ptr++;
-    }
-    _timers.erase(_timers.begin(), iter);
-    _calling_expired_timers = false;
+  // LOG_WARN << (_timers.begin()->first.first < now);
+  //  if (iter != _timers.end()) {
+  _calling_expired_timers = true;
+  _canceling_timers.clear();
+  auto ptr = _timers.begin();
+  while (ptr != iter) {
+    ptr->second->run();
+    _active_timers.erase(ptr->first.second);
+    expired.push_back(std::move(ptr->second));
+    ptr++;
   }
+  _timers.erase(_timers.begin(), iter);
+  _calling_expired_timers = false;
+  //}
 
   reset(expired, now);
 }

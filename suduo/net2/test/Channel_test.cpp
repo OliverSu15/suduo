@@ -38,8 +38,7 @@ void print(const char* msg) {
   Timestamp& last = lasts[msg];
   Timestamp now = Timestamp::now();
   printf("%s tid %d %s delay %f\n", now.to_string().c_str(),
-         Current_thread_info::tid(), msg,
-         (now - last).get_microseconds_in_double());
+         Current_thread_info::tid(), msg, (now - last).get_seconds_in_double());
   last = now;
 }
 

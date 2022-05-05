@@ -28,7 +28,7 @@ InetAddress::InetAddress(uint16_t port, bool loop_back_only, bool ipv6) {
 }
 
 InetAddress::InetAddress(const std::string& ip, uint16_t port, bool ipv6) {
-  if (ipv6) {
+  if (ipv6 || std::strchr(ip.c_str(), ':')) {
     sockaddr_in6 addr_6;
     sockets::from_Ip_port(ip.c_str(), port, &addr_6);
     _addr = addr_6;

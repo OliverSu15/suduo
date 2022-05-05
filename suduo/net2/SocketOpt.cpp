@@ -1,18 +1,11 @@
 #include "SocketOpt.h"
 
-#include <arpa/inet.h>
-#include <asm-generic/socket.h>
-#include <bits/types/cookie_io_functions_t.h>
-#include <netinet/in.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>  // snprintf
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/uio.h>
+#include <sys/uio.h>  // readv
 #include <unistd.h>
-
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
 
 #include "suduo/base/Logger.h"
 #include "suduo/net/Endian.h"
@@ -68,15 +61,15 @@ void sockets::to_Ip(char* buf, size_t size, const sockaddr* addr) {
 void sockets::from_Ip_port(const char* ip, uint16_t port, sockaddr_in* addr) {
   addr->sin_family = AF_INET;
   addr->sin_port = host_to_network_16(port);
-  if (inet_pton(AF_INET, ip, &addr->sin_addr) <= 0) {
-    LOG_SYSFATAL << "sockets::from_Ip_port";
+  if (::inet_pton(AF_INET, ip, &addr->sin_addr) <= 0) {
+    LOG_SYSERR << "sockets::from_Ip_port";
   }
 }
 void sockets::from_Ip_port(const char* ip, uint16_t port, sockaddr_in6* addr) {
   addr->sin6_family = AF_INET6;
   addr->sin6_port = host_to_network_16(port);
-  if (inet_pton(AF_INET6, ip, &addr->sin6_addr) <= 0) {
-    LOG_SYSFATAL << "sockets::from_Ip_port";
+  if (::inet_pton(AF_INET6, ip, &addr->sin6_addr) <= 0) {
+    LOG_SYSERR << "sockets::from_Ip_port";
   }
 }
 
