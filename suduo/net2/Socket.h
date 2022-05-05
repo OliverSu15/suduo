@@ -43,6 +43,8 @@ class Socket : noncopyable {
     return conn_fd;
   }
 
+  void shutdown_write() const { sockets::shutdown_write(_sock_fd); }
+
   int set_sock_opt(int level, int opt_name, const void* val,
                    socklen_t len) const {
     return ::setsockopt(_sock_fd, level, opt_name, val, len);
