@@ -22,9 +22,10 @@ class EchoClient : noncopyable {
   EchoClient(EventLoop* loop, const InetAddress& listenAddr, const string& id)
       : loop_(loop), client_(loop, listenAddr, "EchoClient" + id) {
     client_.set_connection_callback(
-        std::bind(&EchoClient::onConnection, this, _1));
+        std::bind(&EchoClient::onConnection, this, std::placeholders::_1));
     client_.set_message_callback(
-        std::bind(&EchoClient::onMessage, this, _1, _2, _3));
+        std::bind(&EchoClient::onMessage, this, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3));
     // client_.enableRetry();
   }
 
@@ -71,7 +72,6 @@ int main(int argc, char* argv[]) {
     EventLoop loop;
     bool ipv6 = argc > 3;
     InetAddress serverAddr(argv[1], 2000, ipv6);
-
     int n = 1;
     if (argc > 2) {
       n = atoi(argv[2]);

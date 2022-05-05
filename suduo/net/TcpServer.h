@@ -49,14 +49,18 @@ class TcpServer : noncopyable {
   using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
 
   EventLoop* _loop;
+
   const std::string _ip_port;
   const std::string _name;
+
   std::unique_ptr<Acceptor> _acceptor;
   std::shared_ptr<EventLoopThreadPool> _thread_pool;
+
   ConnectionCallback _connection_callback;
   MessageCallback _message_callback;
   WriteCompleteCallback _write_complete_callback;
   ThreadInitCallback _thread_init_callback;
+
   std::atomic_int32_t _started;
   int _next_conn_id;
   ConnectionMap _connections;

@@ -1,8 +1,8 @@
 #ifndef TCP_CLIENT
 #define TCP_CLIENT
-
 #include "suduo/base/Mutex.h"
 #include "suduo/net/TcpConnection.h"
+
 namespace suduo {
 namespace net {
 class Connector;
@@ -44,13 +44,18 @@ class TcpClient : noncopyable {
   void remove_connection(const TcpConnectionPtr& conn);
 
   EventLoop* _loop;
+
   ConnectorPtr _connector;
+
   const std::string _name;
+
   ConnectionCallback _connection_callback;
   MessageCallback _message_callback;
   WriteCompleteCallback _write_complete_callback;
+
   bool _retry;
   bool _connect;
+
   int _next_conn_id;
   mutable MutexLock _mutex;
   TcpConnectionPtr _connection;

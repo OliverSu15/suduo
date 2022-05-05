@@ -3,12 +3,11 @@
 #include <any>
 #include <memory>
 
-#include "Callbacks.h"
 #include "suduo/base/noncopyable.h"
 #include "suduo/net/Buffer.h"
+#include "suduo/net/Callbacks.h"
 #include "suduo/net/InetAddress.h"
 struct tcp_info;
-
 namespace suduo {
 namespace net {
 class Channel;
@@ -62,17 +61,16 @@ class TcpConnection : noncopyable,
     _high_water_mark_callback = cb;
     _hight_water_mark = high_water_mark;
   }
+  void set_close_callback(const CloseCallback& cb) { _close_callback = cb; }
 
   Buffer* input_buffer() { return &_input_buffer; }
   Buffer* output_buffer() { return &_output_buffer; }
-
-  void set_close_callback(const CloseCallback& cb) { _close_callback = cb; }
 
   void connect_established();
   void connect_destroyed();
 
  private:
-  enum StateE { Disconnected, Connecting, Connected, Disconnecting };
+  enum State { Disconnected, Connecting, Connected, Disconnecting };
 
   void handle_read(Timestamp receive_time);
   void handle_write();
@@ -84,32 +82,37 @@ class TcpConnection : noncopyable,
   void shutdown_in_loop();
 
   void force_close_in_loop();
-  void set_state(StateE s) { _state = s; }
-  const char* stateToString() const;
+  void set_state(State s) { _state = s; }
+  const char* state_to_string() const;
   void start_read_in_loop();
   void stop_read_in_loop();
 
   EventLoop* _loop;
+
   const std::string _name;
-  StateE _state;  // FIXME: use atomic variable
+  std::atomic<State> _state;  // FIXME: use atomic variable
   bool _reading;
-  // we don't expose those classes to client.
+
   std::unique_ptr<Socket> _socket;
   std::unique_ptr<Channel> _channel;
+
   const InetAddress _local_addr;
   const InetAddress _peer_addr;
+
   ConnectionCallback _connection_callback;
   MessageCallback _message_callback;
   WriteCompleteCallback _write_complete_callback;
   HighWaterMarkCallback _high_water_mark_callback;
   CloseCallback _close_callback;
+
   size_t _hight_water_mark;
+
   Buffer _input_buffer;
   Buffer _output_buffer;
+
   std::any _context;
 };
-// typedef Tcp_connection_ptr
-using Tcp_connection_ptr = std::shared_ptr<TcpConnection>;
+using TCP_connection_ptr = std::shared_ptr<TcpConnection>;
 }  // namespace net
 }  // namespace suduo
 #endif

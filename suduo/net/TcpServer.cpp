@@ -1,4 +1,4 @@
-#include "TcpServer.h"
+#include "suduo/net/TcpServer.h"
 
 #include <stdio.h>
 
@@ -72,8 +72,8 @@ void TcpServer::new_connection(int sock_fd, const InetAddress& peer_addr) {
   conn->set_connection_callback(_connection_callback);
   conn->set_message_callback(_message_callback);
   conn->set_write_complete_callback(_write_complete_callback);
-  conn->set_close_callback(
-      std::bind(&TcpServer::remove_connection, this, _1));  // FIXME: unsafe
+  conn->set_close_callback(std::bind(&TcpServer::remove_connection, this,
+                                     std::placeholders::_1));  // FIXME: unsafe
   ioLoop->run_in_loop(std::bind(&TcpConnection::connect_established, conn));
 }
 

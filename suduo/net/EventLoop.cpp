@@ -4,20 +4,16 @@
 #include <sys/eventfd.h>
 #include <unistd.h>
 
-#include <algorithm>
-
+#include "suduo/base/BlockingQueue.h"
 #include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Logger.h"
-#include "suduo/base/Mutex.h"
-#include "suduo/base/Timestamp.h"
 #include "suduo/net/Channel.h"
 #include "suduo/net/Poller.h"
 #include "suduo/net/SocketOpt.h"
 #include "suduo/net/TimerQueue.h"
 using EventLoop = suduo::net::EventLoop;
 using namespace suduo::net;
-// TODO change it later
-namespace {
+
 __thread EventLoop* loop_in_this_thrad = nullptr;
 
 const int POLL_TIME_MS = 10000;
@@ -25,7 +21,7 @@ const int POLL_TIME_MS = 10000;
 int create_event_fd() {
   int event_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
   if (event_fd < 0) {
-    // TODO handle error;
+    LOG_ERROR << "EventLoop:create_event_fd()";
   }
   return event_fd;
 }
@@ -36,25 +32,24 @@ class IgnoreSigPipe {
 };
 
 IgnoreSigPipe inti_obj;
-}  // namespace
 
 EventLoop* EventLoop::get_event_loop_of_current_thread() {
   return loop_in_this_thrad;
 }
 
 EventLoop::EventLoop()
-    : _looping(false),
-      _quit(false),
+    : _running(false),
       _event_handling(false),
       _calling_pending_functors(false),
       _iteratoin(0),
       _thread_ID(Current_thread_info::tid()),
-      _poller(Poller::new_dafault_poller(this)),
+      _poller(Poller::new_default_poller(this)),
       _timer_queue(new TimerQueue(this)),
       wakeup_fd(create_event_fd()),
-      _wake_up_channel(new Channel(this, wakeup_fd)),
+      _wake_up_channel(new Channel(_poller, wakeup_fd)),
       _current_active_channel(nullptr) {
   LOG_DEBUG << "EventLoop created " << this << " in thread " << _thread_ID;
+
   if (loop_in_this_thrad) {
     LOG_FATAL << "Another EventLoop " << loop_in_this_thrad
               << " exists in this thread " << _thread_ID;
@@ -76,17 +71,15 @@ EventLoop::~EventLoop() {
 }
 
 void EventLoop::loop() {
-  assert(!_looping);
-
   assert_in_loop_thread();
-  _looping = true;
-  _quit = false;  // FIXME: what if someone calls quit() before loop() ?
+  _running = true;
   LOG_TRACE << "EventLoop " << this << " start looping";
-
-  while (!_quit) {
+  while (_running) {
     _active_channel.clear();
     _poll_return_time = _poller->poll(POLL_TIME_MS, &_active_channel);
+
     ++_iteratoin;
+
     if (Logger::log_level() <= Logger::LogLevel::TRACE) {
       print_active_channels();
     }
@@ -96,14 +89,16 @@ void EventLoop::loop() {
       _current_active_channel = channel;
       _current_active_channel->handle_event(_poll_return_time);
     }
+
     _current_active_channel = nullptr;
     _event_handling = false;
+
     do_pending_functors();
   }
 }
 
 void EventLoop::quit() {
-  _quit = true;
+  _running = false;
   // There is a chance that loop() just executes while(!quit_) and exits,
   // then EventLoop destructs, then we are accessing an invalid object.
   // Can be fixed using mutex_ in both places.
@@ -136,52 +131,22 @@ size_t EventLoop::queueSize() const {
   return _pending_functors.size();
 }
 
-TimerID EventLoop::run_at(Timestamp time, TimerCallback cb) {
+uint64_t EventLoop::run_at(Timestamp time, TimerCallback cb) {
   return _timer_queue->add_timer(std::move(cb), time, 0.0);
 }
 
-TimerID EventLoop::run_after(double delay, TimerCallback cb) {
+uint64_t EventLoop::run_after(double delay, TimerCallback cb) {
   Timestamp time = Timestamp::now() + Timestamp::SecondsDouble(delay);
   return run_at(time, std::move(cb));
 }
 
-TimerID EventLoop::run_every(double interval, TimerCallback cb) {
-  // Timestamp time(addTime(Timestamp::now(), interval));
+uint64_t EventLoop::run_every(double interval, TimerCallback cb) {
   Timestamp time = Timestamp::now() + Timestamp::SecondsDouble(interval);
   return _timer_queue->add_timer(std::move(cb), time, interval);
 }
 
-void EventLoop::cancel(TimerID timer_id) {
+void EventLoop::cancel(uint64_t timer_id) {
   return _timer_queue->cancel(timer_id);
-}
-
-void EventLoop::update_channel(Channel* channel) {
-  assert(channel->owner_loop() == this);
-  assert_in_loop_thread();
-  _poller->update_channel(channel);
-}
-
-void EventLoop::remove_channel(Channel* channel) {
-  assert(channel->owner_loop() == this);
-  assert_in_loop_thread();
-  if (_event_handling) {
-    assert(_current_active_channel == channel ||
-           std::find(_active_channel.begin(), _active_channel.end(), channel) ==
-               _active_channel.end());
-  }
-  _poller->remove_channel(channel);
-}
-
-bool EventLoop::has_channel(Channel* channel) {
-  assert(channel->owner_loop() == this);
-  assert_in_loop_thread();
-  return _poller->has_channel(channel);
-}
-
-void EventLoop::abort_not_in_loop_thread() {
-  LOG_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
-            << " was created in threadId_ = " << _thread_ID
-            << ", current thread id = " << Current_thread_info::tid();
 }
 
 void EventLoop::wakeup() {

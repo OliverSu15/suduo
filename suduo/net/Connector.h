@@ -5,6 +5,7 @@
 
 #include "suduo/base/noncopyable.h"
 #include "suduo/net/InetAddress.h"
+
 namespace suduo {
 namespace net {
 class Channel;
@@ -28,9 +29,12 @@ class Connector : noncopyable, public std::enable_shared_from_this<Connector> {
 
  private:
   enum State { Disconnected, Connecting, Connected };
+
   static const int MAX_RETRY_DELAY_MS;
   static const int INIT_RETRY_DELAY_MS;
+
   void set_state(State s) { _state = s; }
+
   void start_in_loop();
   void stop_in_loop();
   void connect();
@@ -43,13 +47,14 @@ class Connector : noncopyable, public std::enable_shared_from_this<Connector> {
 
   EventLoop* _loop;
   InetAddress _server_addr;
+
   bool _connect;
   State _state;
+
   std::unique_ptr<Channel> _channel;
   NewConnectionCallback _new_connection_callback;
   int retry_delay_ms;
 };
 }  // namespace net
 }  // namespace suduo
-
 #endif

@@ -4,7 +4,9 @@
 
 #include "suduo/net/Poller.h"
 struct epoll_event;
+
 namespace suduo {
+
 namespace net {
 class EPollPoller : public Poller {
  public:
@@ -17,17 +19,16 @@ class EPollPoller : public Poller {
   void remove_channel(Channel* channel) override;
 
  private:
-  static const int init_event_list_size = 16;
+  using EventList = std::vector<epoll_event>;
 
+  static const int init_event_list_size = 16;
   static const char* operation_to_string(int op);
 
-  void fill_active_channels(int events_num, ChannelList* active_channels) const;
+  void fill_active_channels(int event_num, ChannelList* active_channels) const;
 
   void update(int operation, Channel* channel);
 
-  using EventList = std::vector<epoll_event>;
-
-  int _epoll_fd;
+  const int _epoll_fd;
   EventList _events;
 };
 }  // namespace net

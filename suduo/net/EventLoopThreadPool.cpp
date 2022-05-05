@@ -49,15 +49,6 @@ EventLoop* EventLoopThreadPool::get_next_loop() {
   return loop;
 }
 
-EventLoop* EventLoopThreadPool::get_loop_for_hash(size_t hash_code) {
-  _base_loop->assert_in_loop_thread();
-  EventLoop* loop = _base_loop;
-  if (!_loops.empty()) {
-    loop = _loops[hash_code % _loops.size()];
-  }
-  return loop;
-}
-
 std::vector<EventLoop*> EventLoopThreadPool::get_all_loops() {
   _base_loop->assert_in_loop_thread();
   assert(_started);

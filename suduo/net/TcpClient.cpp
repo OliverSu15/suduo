@@ -1,11 +1,14 @@
-#include "TcpClient.h"
+#include "suduo/net/TcpClient.h"
 
 #include <stdio.h>
+
+#include <functional>
 
 #include "suduo/base/Logger.h"
 #include "suduo/net/Connector.h"
 #include "suduo/net/EventLoop.h"
 #include "suduo/net/SocketOpt.h"
+
 using TcpClient = suduo::net::TcpClient;
 using namespace suduo;
 using namespace suduo::net;
@@ -15,6 +18,7 @@ namespace detail {
 void remove_connection(EventLoop* loop, const TcpConnectionPtr& conn) {
   loop->queue_in_loop(std::bind(&TcpConnection::connect_destroyed, conn));
 }
+
 void remove_connector(const ConnectorPtr& connector) {}
 }  // namespace detail
 }  // namespace net
@@ -49,7 +53,8 @@ TcpClient::~TcpClient() {
   }
   if (conn) {
     assert(_loop == conn->get_loop());
-    CloseCallback cb = std::bind(&detail::remove_connection, _loop, _1);
+    CloseCallback cb =
+        std::bind(&detail::remove_connection, _loop, std::placeholders::_1);
     _loop->run_in_loop(std::bind(&TcpConnection::set_close_callback, conn, cb));
     if (unique) {
       conn->force_close();
@@ -98,7 +103,8 @@ void TcpClient::new_connection(int sock_fd) {
   conn->set_connection_callback(_connection_callback);
   conn->set_message_callback(_message_callback);
   conn->set_write_complete_callback(_write_complete_callback);
-  conn->set_close_callback(std::bind(&TcpClient::remove_connection, this, _1));
+  conn->set_close_callback(
+      std::bind(&TcpClient::remove_connection, this, std::placeholders::_1));
   {
     MutexLockGuard lock(_mutex);
     _connection = conn;

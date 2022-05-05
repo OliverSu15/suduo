@@ -1,14 +1,13 @@
-#include "PollPoller.h"
+#include "suduo/net/poller/PollPoller.h"
 
-#include <assert.h>
-#include <errno.h>
 #include <poll.h>
 
 #include "suduo/base/Logger.h"
 #include "suduo/net/Channel.h"
+
 using PollPoller = suduo::net::PollPoller;
-using namespace suduo::net;
 using namespace suduo;
+
 PollPoller::PollPoller(EventLoop* loop) : Poller(loop) {}
 
 PollPoller::~PollPoller() = default;
@@ -21,7 +20,6 @@ Timestamp PollPoller::poll(int timeout_ms, ChannelList* active_channels) {
 
   if (events_num > 0) {
     LOG_TRACE << events_num << " events happened";
-
     fill_active_channels(events_num, active_channels);
   } else if (events_num == 0) {
     LOG_TRACE << " nothing happened";
@@ -34,20 +32,16 @@ Timestamp PollPoller::poll(int timeout_ms, ChannelList* active_channels) {
 
 void PollPoller::fill_active_channels(int events_num,
                                       ChannelList* active_channels) const {
-  for (PollFdList::const_iterator pfd = _poll_fds.begin();
-       pfd != _poll_fds.end() && events_num > 0; pfd++) {
+  for (auto pfd = _poll_fds.begin(); pfd != _poll_fds.end() && events_num > 0;
+       pfd++) {
     if (pfd->revents > 0) {
       --events_num;
-      ChannelMap::const_iterator ch = _channels.find(pfd->fd);
-
-      assert(ch != _channels.end());
-
-      Channel* channel = ch->second;
-
-      assert(channel->fd() == pfd->fd);
-
-      channel->set_revents(pfd->revents);
-      active_channels->push_back(channel);
+      auto ch = _channels.find(pfd->fd);
+      if (ch != _channels.end()) {
+        Channel* channel = ch->second;
+        channel->set_revents(pfd->revents);
+        active_channels->push_back(channel);
+      }
     }
   }
 }
@@ -84,7 +78,7 @@ void PollPoller::update_channel(Channel* channel) {
     pfd.fd = channel->fd();
     pfd.events = channel->events();
     pfd.revents = 0;
-    if (channel->is_none_event()) {
+    if (channel->is_disable_all()) {
       pfd.fd = -channel->fd() - 1;
     }
   }
@@ -97,7 +91,7 @@ void PollPoller::remove_channel(Channel* channel) {
 
   assert(_channels.find(channel->fd()) != _channels.end());
   assert(_channels[channel->fd()] == channel);
-  assert(channel->is_none_event());
+  assert(channel->is_disable_all());
 
   int idx = channel->index();
   assert(0 <= idx && idx < static_cast<int>(_poll_fds.size()));

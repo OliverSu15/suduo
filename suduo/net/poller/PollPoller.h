@@ -1,9 +1,8 @@
 #ifndef POLL_POLLER_H
 #define POLL_POLLER_H
-#include <vector>
+#include <netinet/in.h>
+#include <pthread.h>
 
-#include "suduo/base/Timestamp.h"
-#include "suduo/net/Channel.h"
 #include "suduo/net/Poller.h"
 struct pollfd;
 namespace suduo {
@@ -19,7 +18,7 @@ class PollPoller : public Poller {
   void remove_channel(Channel* channel) override;
 
  private:
-  using PollFdList = std::vector<pollfd>;
+  using PollFdList = std::vector<pollfd>;  // a change
 
   void fill_active_channels(int events_num, ChannelList* active_channels) const;
 
