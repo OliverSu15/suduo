@@ -299,7 +299,6 @@ void TcpConnection::handle_close() {
 
 void TcpConnection::handle_error() {
   int err = sockets::get_socket_error(_channel->fd());
-  // TODO fix it
-  //  LOG_ERROR << "TcpConnection::handleError [" << _name
-  //            << "] - SO_ERROR = " << err << " " << strerror_tl(err);
+  LOG_ERROR << "TcpConnection::handleError [" << _name
+            << "] - SO_ERROR = " << err << " " << strerror_tl(err);
 }

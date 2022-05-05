@@ -121,9 +121,8 @@ void Connector::handle_write() {
     int sock_fd = remove_and_reset_channel();
     int err = sockets::get_socket_error(sock_fd);
     if (err) {
-      // TODO fix it
-      //  LOG_WARN << "Connector::handleWrite - SO_ERROR = " << err << " "
-      //           << strerror_tl(err);
+      LOG_WARN << "Connector::handleWrite - SO_ERROR = " << err << " "
+               << strerror_tl(err);
       retry(sock_fd);
     } else if (sockets::is_self_connect(sock_fd)) {
       LOG_WARN << "Connector::handleWrite - Self connect";
@@ -146,8 +145,7 @@ void Connector::handle_error() {
   if (_state == Connecting) {
     int sock_fd = remove_and_reset_channel();
     int err = sockets::get_socket_error(sock_fd);
-    // TODO fix it
-    // LOG_TRACE << "SO_ERROR = " << err << " " << strerror_tl(err);
+    LOG_TRACE << "SO_ERROR = " << err << " " << strerror_tl(err);
     retry(sock_fd);
   }
 }
