@@ -6,4 +6,4 @@ install(TARGETS suduo_net2 DESTINATION lib)
 file(GLOB HEADERS "*.h" "poller/*.h")
 install(FILES ${HEADERS} DESTINATION include/suduo/net2)
 
-# add_subdirectory(test)
+add_subdirectory(test)
