@@ -13,9 +13,6 @@
 using namespace suduo;
 using EPollPoller = suduo::net::EPollPoller;
 
-// TODO make it widely accessable
-inline void memZero(void* p, size_t n) { memset(p, 0, n); }
-
 EPollPoller::EPollPoller(EventLoop* loop)
     : Poller(loop),
       _epoll_fd(epoll_create1(EPOLL_CLOEXEC)),
@@ -86,7 +83,7 @@ void EPollPoller::remove_channel(Channel* channel) {
 
 void EPollPoller::update(int operation, Channel* channel) {
   epoll_event event;
-  memZero(&event, sizeof(event));
+  memzero(&event, sizeof(event));
   event.events = channel->events();
   event.data.ptr = channel;
   int fd = channel->fd();
