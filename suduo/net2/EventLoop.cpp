@@ -7,10 +7,10 @@
 #include "suduo/base/BlockingQueue.h"
 #include "suduo/base/CurrentThreadInfo.h"
 #include "suduo/base/Logger.h"
-#include "suduo/net/TimerQueue.h"
 #include "suduo/net2/Channel.h"
 #include "suduo/net2/Poller.h"
 #include "suduo/net2/SocketOpt.h"
+#include "suduo/net2/TimerQueue.h"
 using EventLoop = suduo::net::EventLoop;
 using namespace suduo::net;
 
@@ -46,7 +46,7 @@ EventLoop::EventLoop()
       _poller(Poller::new_default_poller(this)),
       _timer_queue(new TimerQueue(this)),
       wakeup_fd(create_event_fd()),
-      _wake_up_channel(new Channel(this, wakeup_fd)),
+      _wake_up_channel(new Channel(_poller, wakeup_fd)),
       _current_active_channel(nullptr) {
   LOG_DEBUG << "EventLoop created " << this << " in thread " << _thread_ID;
 
@@ -131,21 +131,21 @@ size_t EventLoop::queueSize() const {
   return _pending_functors.size();
 }
 
-TimerID EventLoop::run_at(Timestamp time, TimerCallback cb) {
+uint64_t EventLoop::run_at(Timestamp time, TimerCallback cb) {
   return _timer_queue->add_timer(std::move(cb), time, 0.0);
 }
 
-TimerID EventLoop::run_after(double delay, TimerCallback cb) {
+uint64_t EventLoop::run_after(double delay, TimerCallback cb) {
   Timestamp time = Timestamp::now() + Timestamp::SecondsDouble(delay);
   return run_at(time, std::move(cb));
 }
 
-TimerID EventLoop::run_every(double interval, TimerCallback cb) {
+uint64_t EventLoop::run_every(double interval, TimerCallback cb) {
   Timestamp time = Timestamp::now() + Timestamp::SecondsDouble(interval);
   return _timer_queue->add_timer(std::move(cb), time, interval);
 }
 
-void EventLoop::cancel(TimerID timer_id) {
+void EventLoop::cancel(uint64_t timer_id) {
   return _timer_queue->cancel(timer_id);
 }
 

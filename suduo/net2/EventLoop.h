@@ -28,17 +28,18 @@ class EventLoop : noncopyable {
 
   Timestamp poll_return_time() const { return _poll_return_time; }
   int64_t iteration() const { return _iteratoin; }
+  const std::unique_ptr<Poller>& poller() const { return _poller; }
 
   void run_in_loop(Functor cb);
   void queue_in_loop(Functor cb);
 
   size_t queueSize() const;
 
-  TimerID run_at(Timestamp time, TimerCallback cb);
-  TimerID run_after(double delay, TimerCallback cb);     // delay seconds
-  TimerID run_every(double interval, TimerCallback cb);  // interval seconds
+  uint64_t run_at(Timestamp time, TimerCallback cb);
+  uint64_t run_after(double delay, TimerCallback cb);     // delay seconds
+  uint64_t run_every(double interval, TimerCallback cb);  // interval seconds
 
-  void cancel(TimerID timer_id);
+  void cancel(uint64_t timer_id);
 
   void wakeup();
 
