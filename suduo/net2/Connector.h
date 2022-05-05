@@ -54,7 +54,7 @@ class Connector : noncopyable, public std::enable_shared_from_this<Connector> {
   std::unique_ptr<Channel> _channel;
   NewConnectionCallback _new_connection_callback;
   int retry_delay_ms;
-};  // namespace net
+};
 }  // namespace net
 }  // namespace suduo
 #endif

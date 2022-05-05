@@ -2,10 +2,12 @@
 #define SUDUO_SOCKET_H
 
 #include <netinet/tcp.h>
+#include <sys/socket.h>
 
 #include <utility>
 
 #include "suduo/base/noncopyable.h"
+#include "suduo/net2/SocketOpt.h"
 namespace suduo {
 namespace net {
 class InetAddress;

@@ -1,5 +1,3 @@
-
-
 #include "suduo/net/EventLoopThread.h"
 
 #include <memory>
