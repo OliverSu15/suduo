@@ -64,6 +64,7 @@ inline void shutdown_write(int sockfd) {
 }
 
 int accept(int sockfd, sockaddr_in6* addr);
+int accept(int sockfd, sockaddr_in* addr);
 
 inline ssize_t read(int sockfd, void* buf, size_t count) {
   return ::read(sockfd, buf, count);
@@ -91,6 +92,9 @@ inline const sockaddr* sockaddr_cast(const sockaddr_in6* addr) {
 }
 inline sockaddr* sockaddr_cast(sockaddr_in6* addr) {
   return pointer_cast<sockaddr, sockaddr_in6>(addr);
+}
+inline sockaddr* sockaddr_cast(sockaddr_in* addr) {
+  return pointer_cast<sockaddr, sockaddr_in>(addr);
 }
 inline const sockaddr_in* sockaddr_in_cast(const sockaddr* addr) {
   return pointer_cast_const<sockaddr_in, sockaddr>(addr);

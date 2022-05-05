@@ -7,22 +7,11 @@
 #include <unistd.h>
 
 #include "suduo/base/Logger.h"
+#include "suduo/base/Timestamp.h"
 #include "suduo/net/Channel.h"
-using namespace suduo::net;
+
 using namespace suduo;
-
 using EPollPoller = suduo::net::EPollPoller;
-
-static_assert(EPOLLIN == POLLIN, "epoll uses same flag values as poll");
-static_assert(EPOLLPRI == POLLPRI, "epoll uses same flag values as poll");
-static_assert(EPOLLOUT == POLLOUT, "epoll uses same flag values as poll");
-static_assert(EPOLLRDHUP == POLLRDHUP, "epoll uses same flag values as poll");
-static_assert(EPOLLERR == POLLERR, "epoll uses same flag values as poll");
-static_assert(EPOLLHUP == POLLHUP, "epoll uses same flag values as poll");
-
-inline void memZero(void* p, size_t n) { memset(p, 0, n); }
-
-enum Action { New = -1, Added = 1, Deleted = 2 };
 
 EPollPoller::EPollPoller(EventLoop* loop)
     : Poller(loop),
@@ -37,7 +26,6 @@ EPollPoller::~EPollPoller() { close(_epoll_fd); }
 
 Timestamp EPollPoller::poll(int timeout_ms, ChannelList* active_channels) {
   LOG_TRACE << "fd total count " << _channels.size();
-
   int event_nums =
       epoll_wait(_epoll_fd, _events.data(), _events.size(), timeout_ms);
 
@@ -56,21 +44,18 @@ Timestamp EPollPoller::poll(int timeout_ms, ChannelList* active_channels) {
     LOG_TRACE << "nothing happened";
   } else {
     if (saved_errno != EINTR) {
-      // errno = saved_errno;
       LOG_SYSERR << "EPollPoller::poll()" << saved_errno;
     }
   }
-
   return now;
 }
 
-void EPollPoller::fill_active_channels(int events_num,
+void EPollPoller::fill_active_channels(int event_num,
                                        ChannelList* active_channels) const {
-  assert(events_num <= _events.size());
-
-  for (int i = 0; i < events_num; i++) {
+  for (int i = 0; i < event_num; i++) {
     Channel* channel = static_cast<Channel*>(_events[i].data.ptr);
     channel->set_revents(_events[i].events);
+    // LOG_WARN << "HERE";
     active_channels->push_back(channel);
   }
 }
@@ -78,66 +63,28 @@ void EPollPoller::fill_active_channels(int events_num,
 void EPollPoller::update_channel(Channel* channel) {
   Poller::assert_in_loop_thread();
 
-  const int index = channel->index();
+  const int fd = channel->fd();
+  auto iter = _channels.find(fd);
 
-  LOG_TRACE << "fd = " << channel->fd() << " events = " << channel->events()
-            << " index = " << index;
-
-  if (index == Action::New || index == Action::Deleted) {
-    int fd = channel->fd();
-
-    if (index == Action::New) {
-      assert(_channels.find(fd) == _channels.end());
-      _channels[fd] = channel;
-    } else {
-      assert(_channels.find(fd) != _channels.end());
-      assert(_channels[fd] == channel);
-    }
-
-    channel->set_index(Action::Added);
+  if (iter == _channels.end()) {
+    _channels[fd] = channel;
     update(EPOLL_CTL_ADD, channel);
   } else {
-    int fd = channel->fd();
-
-    assert(_channels.find(fd) != _channels.end());
-    assert(_channels[fd] == channel);
-    assert(index == Action::Added);
-
-    if (channel->is_none_event()) {
-      update(EPOLL_CTL_DEL, channel);
-      channel->set_index(Action::Deleted);
-    } else {
-      update(EPOLL_CTL_MOD, channel);
-    }
+    update(EPOLL_CTL_MOD, channel);
   }
 }
-
 void EPollPoller::remove_channel(Channel* channel) {
   Poller::assert_in_loop_thread();
-
   int fd = channel->fd();
 
-  LOG_TRACE << "fd = " << fd;
-
-  assert(_channels.find(fd) != _channels.end());
-  assert(_channels[fd] == channel);
-  assert(channel->is_none_event());
-
-  int index = channel->index();
-  assert(index == Action::Added || index == Action::Deleted);
-  size_t n = _channels.erase(fd);
-
-  assert(n == 1);
-
-  if (index == Action::Added) {
-    update(EPOLL_CTL_DEL, channel);
-  }
-  channel->set_index(Action::New);
+  if (_channels.find(fd) == _channels.end()) return;
+  _channels.erase(fd);
+  update(EPOLL_CTL_DEL, channel);
 }
 
 void EPollPoller::update(int operation, Channel* channel) {
   epoll_event event;
-  memZero(&event, sizeof event);
+  memzero(&event, sizeof(event));
   event.events = channel->events();
   event.data.ptr = channel;
   int fd = channel->fd();

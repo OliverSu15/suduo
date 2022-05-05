@@ -1,20 +1,19 @@
 #include "TimerQueue.h"
 
+#include <bits/types/struct_FILE.h>
 #include <sys/timerfd.h>
-#include <unistd.h>
 
+#include <cstdint>
 #include <memory>
 
 #include "suduo/base/Logger.h"
 #include "suduo/base/Timestamp.h"
+#include "suduo/net/Channel.h"
 #include "suduo/net/EventLoop.h"
 #include "suduo/net/Timer.h"
-#include "suduo/net/TimerId.h"
+using namespace suduo;
+using suduo::net::Timer;
 
-namespace suduo {
-inline void memZero(void* p, size_t n) { memset(p, 0, n); }
-namespace net {
-namespace detail {
 int create_timer_fd() {
   int timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
   if (timer_fd < 0) {
@@ -23,14 +22,14 @@ int create_timer_fd() {
   return timer_fd;
 }
 
-timespec how_much_time_from_now(Timestamp when) {
+timespec how_much_time_from_now(const Timestamp& when) {
   Timestamp diff = when - Timestamp::now();
   if (diff.get_microseconds_in_int64() < 100)
     diff = Timestamp(Timestamp::Microseconds(100));
   return Timestamp::to_time_spec(diff);
 }
 
-void read_timer_fd(int timer_fd, Timestamp now) {
+void read_timer_fd(int timer_fd, const Timestamp& now) {
   uint64_t how_many;
   ssize_t n = read(timer_fd, &how_many, sizeof(how_many));
   LOG_TRACE << "TimerQueue::handleRead() " << how_many << " at "
@@ -41,11 +40,11 @@ void read_timer_fd(int timer_fd, Timestamp now) {
   }
 }
 
-void reset_timer_fd(int timer_fd, Timestamp expiration) {
+void reset_timer_fd(int timer_fd, const Timestamp& expiration) {
   itimerspec new_value;
   itimerspec old_value;
-  memZero(&new_value, sizeof new_value);
-  memZero(&old_value, sizeof old_value);
+  memzero(&new_value, sizeof(new_value));
+  memzero(&old_value, sizeof(old_value));
   new_value.it_value = how_much_time_from_now(expiration);
   int ret = timerfd_settime(timer_fd, 0, &new_value, &old_value);
   if (ret) {
@@ -53,17 +52,12 @@ void reset_timer_fd(int timer_fd, Timestamp expiration) {
   }
 }
 
-}  // namespace detail
-}  // namespace net
-}  // namespace suduo
-using namespace suduo;
 using TimerQueue = suduo::net::TimerQueue;
-using namespace suduo::net::detail;
 
 TimerQueue::TimerQueue(EventLoop* loop)
     : _loop(loop),
       _timer_fd(create_timer_fd()),
-      _timer_fd_channel(loop, _timer_fd),
+      _timer_fd_channel(loop->poller(), _timer_fd),
       _timers(),
       _calling_expired_timers(false) {
   _timer_fd_channel.set_read_callback(
@@ -75,92 +69,118 @@ TimerQueue::~TimerQueue() {
   _timer_fd_channel.disable_all();
   _timer_fd_channel.remove();
   close(_timer_fd);
-  for (const Entry& timer : _timers) delete timer.second;  // TODO
 }
 
-suduo::net::TimerID TimerQueue::add_timer(TimerCallback cb, Timestamp when,
-                                          double interval) {
-  Timer* timer = new Timer(std::move(cb), when, interval);
-  _loop->run_in_loop(std::bind(&TimerQueue::add_timer_in_loop, this, timer));
-  return {timer, timer->sequence()};
-}
+uint64_t TimerQueue::add_timer(TimerCallback cb, const Timestamp& when,
+                               double interval) {
+  // Timer* timer = new Timer(std::move(cb), when, interval);
+  std::unique_ptr<Timer> timer =
+      std::make_unique<Timer>(std::move(cb), when, interval);
 
-void TimerQueue::cancel(TimerID timer_id) {
-  _loop->run_in_loop(std::bind(&TimerQueue::cancel_in_loop, this, timer_id));
-}
+  uint64_t id = timer->id();
+  Timestamp expertion_time = timer->expertion_time();
 
-void TimerQueue::add_timer_in_loop(Timer* timer) {
-  _loop->assert_in_loop_thread();
-
-  bool earlies_changed = insert(timer);
+  bool earlies_changed = insert(std::move(timer));
 
   if (earlies_changed) {
-    reset_timer_fd(_timer_fd, timer->expertion_time());
+    reset_timer_fd(_timer_fd, expertion_time);
   }
+  //_loop->run_in_loop(std::bind(&TimerQueue::add_timer_in_loop, this, timer));
+  return id;
 }
-void TimerQueue::cancel_in_loop(TimerID timer_id) {
-  _loop->assert_in_loop_thread();
-  assert(_timers.size() == _active_timers.size());
 
-  ActiveTimer timer(timer_id._timer, timer_id._sequence);
-  auto it = _active_timers.find(timer);
+// void TimerQueue::add_timer_in_loop(std::unique_ptr<Timer>& timer) {
+//   _loop->assert_in_loop_thread();
+//   bool earlies_changed = insert(std::move(timer));
+//   if (earlies_changed) {
+//     reset_timer_fd(_timer_fd, timer->expertion_time());
+//   }
+// }
+
+void TimerQueue::cancel(uint64_t timer_id) {
+  _loop->queue_in_loop(
+      std::bind(&TimerQueue::cancel_in_loop, this,
+                timer_id));  // don't run_in_loop(), it may erase itself
+}
+
+void TimerQueue::cancel_in_loop(uint64_t timer_id) {
+  _loop->assert_in_loop_thread();
+  auto it = _active_timers.find(timer_id);
   if (it != _active_timers.end()) {
-    size_t n = _timers.erase(Entry(it->first->expertion_time(), it->first));
+    // auto timers_it = _timers.find({it->second->expertion_time(), it->first});
+    size_t n = _timers.erase({it->second->expertion_time(), it->first});
     assert(n == 1);
-    delete it->first;  // FIXME: no delete please
     _active_timers.erase(it);
   } else if (_calling_expired_timers) {
-    _canceling_timers.insert(timer);
+    _canceling_timers.insert(timer_id);
   }
   assert(_timers.size() == _active_timers.size());
+}
+
+bool TimerQueue::insert(std::unique_ptr<Timer> timer) {
+  //_loop->assert_in_loop_thread();
+  //
+  assert(_timers.size() == _active_timers.size());
+
+  bool earliestChanged = false;
+  const Timestamp& when = timer->expertion_time();
+
+  auto it = _timers.begin();
+  if (it == _timers.end() || when < it->first.first) {
+    earliestChanged = true;
+  }
+
+  std::pair<TimerMap::iterator, bool> entry_result =
+      _timers.insert({{when, timer->id()}, std::move(timer)});
+  assert(entry_result.second);
+
+  const std::unique_ptr<Timer>& entry_timer = entry_result.first->second;
+
+  std::pair<ActiveTimerMap::iterator, bool> active_timers_result =
+      _active_timers.insert({entry_timer->id(), entry_timer});
+  assert(active_timers_result.second);
+
+  // assert(_timers.size() == _active_timers.size());
+  return earliestChanged;
 }
 
 void TimerQueue::handle_read() {
   _loop->assert_in_loop_thread();
-  Timestamp now(Timestamp::now());
+
+  Timestamp now = Timestamp::now();
+
   read_timer_fd(_timer_fd, now);
-  std::vector<Entry> expired = get_expired(now);
-  // std::vector<Entry> expired;
-  // get_expired(now, expired);
+
+  // std::vector<Entry> expired = get_expired(now);
+  auto iter = _timers.lower_bound({now, UINT64_MAX});
+  std::vector<std::unique_ptr<Timer>> expired;
+  // LOG_WARN << (_timers.begin()->first.first < now);
+  //  if (iter != _timers.end()) {
   _calling_expired_timers = true;
   _canceling_timers.clear();
-  for (const Entry& it : expired) it.second->run();
-  _calling_expired_timers = false;
-  reset(expired, now);
-  // printf("here\n");
-}
-
-std::vector<TimerQueue::Entry> TimerQueue::get_expired(Timestamp now) {
-  assert(_timers.size() == _active_timers.size());
-  std::vector<Entry> expired;
-  Entry sentry(now, reinterpret_cast<Timer*>(UINTPTR_MAX));
-  TimerList::iterator end = _timers.lower_bound(sentry);
-  assert(end == _timers.end() || now < end->first);
-  std::copy(_timers.begin(), end, back_inserter(expired));
-  _timers.erase(_timers.begin(), end);
-
-  for (const Entry& it : expired) {
-    ActiveTimer timer(it.second, it.second->sequence());
-    size_t n = _active_timers.erase(timer);
-    assert(n == 1);
+  auto ptr = _timers.begin();
+  while (ptr != iter) {
+    ptr->second->run();
+    _active_timers.erase(ptr->first.second);
+    expired.push_back(std::move(ptr->second));
+    ptr++;
   }
+  _timers.erase(_timers.begin(), iter);
+  _calling_expired_timers = false;
+  //}
 
-  assert(_timers.size() == _active_timers.size());
-  // printf("here2 %d\n", expired.front().second.use_count());
-  return expired;
+  reset(expired, now);
 }
 
-void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now) {
+void TimerQueue::reset(std::vector<std::unique_ptr<Timer>>& expired,
+                       Timestamp now) {
   Timestamp next_expired;
 
-  for (const Entry& it : expired) {
-    ActiveTimer timer(it.second, it.second->sequence());
-    if (it.second->repeated() &&
-        _canceling_timers.find(timer) == _canceling_timers.end()) {
-      it.second->restart(now);
-      insert(it.second);
-    } else {
-      delete it.second;  // TODO no delete
+  for (auto& it : expired) {
+    if (it->repeated() &&
+        (_canceling_timers.find(it->id()) == _canceling_timers.end())) {
+      it->restart(now);
+      insert(std::move(it));
     }
   }
 
@@ -171,27 +191,4 @@ void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now) {
   if (next_expired.valid()) {
     reset_timer_fd(_timer_fd, next_expired);
   }
-}
-
-bool TimerQueue::insert(Timer* timer) {
-  _loop->assert_in_loop_thread();
-  assert(_timers.size() == _active_timers.size());
-  bool earliestChanged = false;
-  Timestamp when = timer->expertion_time();
-  TimerList::iterator it = _timers.begin();
-  if (it == _timers.end() || when < it->first) {
-    earliestChanged = true;
-  }
-  {
-    std::pair<TimerList::iterator, bool> result =
-        _timers.insert(Entry(when, timer));
-    assert(result.second);
-  }
-  {
-    std::pair<ActiveTimerSet::iterator, bool> result =
-        _active_timers.insert(ActiveTimer(timer, timer->sequence()));
-    assert(result.second);
-  }
-  assert(_timers.size() == _active_timers.size());
-  return earliestChanged;
 }

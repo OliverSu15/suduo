@@ -14,6 +14,7 @@
 #include "suduo/base/Thread.h"
 #include "suduo/base/noncopyable.h"
 namespace suduo {
+inline void memzero(void* p, size_t n) { memset(p, 0, n); }
 const int MIN_BUFFER_SIZE = 4000;
 const int MAX_BUFFER_SIZE = 4000 * 1000;
 

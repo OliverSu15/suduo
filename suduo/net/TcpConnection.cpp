@@ -1,8 +1,10 @@
-#include "TcpConnection.h"
+#include "suduo/net/TcpConnection.h"
 
 #include <cerrno>
+#include <functional>
 
 #include "suduo/base/Logger.h"
+#include "suduo/base/Timestamp.h"
 #include "suduo/base/WeakCallback.h"
 #include "suduo/net/Callbacks.h"
 #include "suduo/net/Channel.h"
@@ -11,8 +13,6 @@
 #include "suduo/net/SocketOpt.h"
 
 using TcpConnection = suduo::net::TcpConnection;
-using namespace suduo::net;
-using namespace suduo;
 
 void suduo::net::defaultConnectionCallback(const TcpConnectionPtr& conn) {
   LOG_TRACE << conn->local_address().to_Ip_port() << " -> "
@@ -35,7 +35,7 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& name,
       _state(Connecting),
       _reading(true),
       _socket(new Socket(sock_fd)),
-      _channel(new Channel(loop, sock_fd)),
+      _channel(new Channel(loop->poller(), sock_fd)),
       _local_addr(local_addr),
       _peer_addr(peer_addr),
       _hight_water_mark(64 * 1024 * 1024) {
@@ -51,18 +51,18 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& name,
 
 TcpConnection::~TcpConnection() {
   LOG_DEBUG << "TcpConnection::dtor[" << _name << "] at " << this
-            << " fd=" << _channel->fd() << " state=" << stateToString();
+            << " fd=" << _channel->fd() << " state=" << state_to_string();
   assert(_state == Disconnected);
 }
 
 bool TcpConnection::get_tcp_info(tcp_info* info) const {
-  return _socket->get_Tcp_info(info);
+  return _socket->get_TCP_info(info);
 }
 
 std::string TcpConnection::get_tcp_info_string() const {
   char buf[1024];
   buf[0] = '\0';
-  _socket->get_Tcp_info_string(buf, sizeof(buf));
+  _socket->get_TCP_info_string(buf, sizeof(buf));
   return buf;
 }
 
@@ -77,12 +77,12 @@ void TcpConnection::send(const std::string& message) {
     } else {
       void (TcpConnection::*fp)(const std::string& message) =
           &TcpConnection::send_in_loop;
+
       _loop->run_in_loop(std::bind(fp, this, message));
     }
   }
 }
 
-// FIXME efficiency!!!
 void TcpConnection::send(Buffer* buf) {
   if (_state == Connected) {
     if (_loop->is_in_loop_thread()) {
@@ -183,7 +183,7 @@ void TcpConnection::force_close_in_loop() {
   }
 }
 
-const char* TcpConnection::stateToString() const {
+const char* TcpConnection::state_to_string() const {
   switch (_state) {
     case Disconnected:
       return "Disconnected";
@@ -198,7 +198,7 @@ const char* TcpConnection::stateToString() const {
   }
 }
 
-void TcpConnection::set_tcp_no_delay(bool on) { _socket->set_Tcp_no_delay(on); }
+void TcpConnection::set_tcp_no_delay(bool on) { _socket->set_TCP_no_delay(on); }
 
 void TcpConnection::start_read() {
   _loop->run_in_loop(std::bind(&TcpConnection::start_read_in_loop, this));
@@ -286,7 +286,7 @@ void TcpConnection::handle_write() {
 
 void TcpConnection::handle_close() {
   _loop->assert_in_loop_thread();
-  LOG_TRACE << "fd = " << _channel->fd() << " state = " << stateToString();
+  LOG_TRACE << "fd = " << _channel->fd() << " state = " << state_to_string();
   assert(_state == Connected || _state == Disconnecting);
 
   set_state(Disconnected);
@@ -299,7 +299,6 @@ void TcpConnection::handle_close() {
 
 void TcpConnection::handle_error() {
   int err = sockets::get_socket_error(_channel->fd());
-  // TODO fix it
-  //  LOG_ERROR << "TcpConnection::handleError [" << _name
-  //            << "] - SO_ERROR = " << err << " " << strerror_tl(err);
+  LOG_ERROR << "TcpConnection::handleError [" << _name
+            << "] - SO_ERROR = " << err << " " << strerror_tl(err);
 }

@@ -1,24 +1,19 @@
-
-
 #include "suduo/net/EventLoopThread.h"
 
-#include <memory>
-
 #include "suduo/net/EventLoop.h"
+
 using namespace suduo::net;
 using EventLoopThread = suduo::net::EventLoopThread;
 
 EventLoopThread::EventLoopThread(const ThreadInitCallback& cb,
                                  const std::string& name)
     : _loop(nullptr),
-      _exiting(false),
       _thread(std::bind(&EventLoopThread::thread_func, this)),
       _mutex(),
       _cond(_mutex),
       _callback(cb) {}
 
 EventLoopThread::~EventLoopThread() {
-  _exiting = true;
   if (_loop != nullptr) {
     _loop->quit();
     _thread.join();

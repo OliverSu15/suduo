@@ -3,12 +3,11 @@
 #include <map>
 #include <vector>
 
-#include "suduo/base/Timestamp.h"
 #include "suduo/base/noncopyable.h"
 #include "suduo/net/EventLoop.h"
 namespace suduo {
-namespace net {
 class Channel;
+namespace net {
 class Poller : noncopyable {
  public:
   using ChannelList = std::vector<Channel*>;
@@ -23,16 +22,17 @@ class Poller : noncopyable {
 
   virtual bool has_channel(Channel* channel) const;
 
-  static Poller* new_dafault_poller(EventLoop* loop);
+  static Poller* new_default_poller(EventLoop* loop);
 
-  void assert_in_loop_thread() const { _owner_loop->assert_in_loop_thread(); }
+  void assert_in_loop_thread() const { _loop->assert_in_loop_thread(); }
 
  protected:
   using ChannelMap = std::map<int, Channel*>;
+
   ChannelMap _channels;
 
  private:
-  EventLoop* _owner_loop;
+  EventLoop* _loop;
 };
 }  // namespace net
 }  // namespace suduo

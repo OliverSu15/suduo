@@ -1,21 +1,11 @@
-#include "InetAddress.h"
+#include "suduo/net/InetAddress.h"
 
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include <array>
-#include <cstdint>
-#include <cstring>
-#include <string>
-#include <utility>
-#include <variant>
-
 #include "suduo/net/Endian.h"
-#include "suduo/net/SocketOpt.h"
-
 using InetAddress = suduo::net::InetAddress;
-using namespace suduo::net;
 
 static const in_addr_t inaddr_loopback = INADDR_LOOPBACK;
 static const in_addr_t inaddr_any = INADDR_ANY;
@@ -37,56 +27,28 @@ InetAddress::InetAddress(uint16_t port, bool loop_back_only, bool ipv6) {
   }
 }
 
-InetAddress::InetAddress(const char* ip, uint16_t port, bool ipv6) {
-  if (ipv6 || std::strchr(ip, ':')) {
+InetAddress::InetAddress(const std::string& ip, uint16_t port, bool ipv6) {
+  if (ipv6 || std::strchr(ip.c_str(), ':')) {
     sockaddr_in6 addr_6;
-    sockets::from_Ip_port(ip, port, &addr_6);
+    sockets::from_Ip_port(ip.c_str(), port, &addr_6);
     _addr = addr_6;
   } else {
     sockaddr_in addr_4;
-    sockets::from_Ip_port(ip, port, &addr_4);
+    sockets::from_Ip_port(ip.c_str(), port, &addr_4);
     _addr = addr_4;
   }
 }
 
-InetAddress::InetAddress(const std::string& ip, uint16_t port, bool ipv6)
-    : InetAddress(ip.c_str(), port, ipv6) {}
-
-sa_family_t InetAddress::family() const {
-  if (_addr.index() == 0) {
-    return std::get<sockaddr_in>(_addr).sin_family;
-  }
-  return std::get<sockaddr_in6>(_addr).sin6_family;
-}
-std::string InetAddress::to_Ip_port() const {
-  std::array<char, 64> buf;
-  sockets::to_Ip_port(buf.data(), buf.size(), get_sock_addr());
-  return buf.data();
-}
-
-std::string InetAddress::to_Ip() const {
-  std::array<char, 64> buf;
-  sockets::to_Ip(buf.data(), buf.size(), get_sock_addr());
-  return buf.data();
-}
-
-uint32_t InetAddress::ipv4_net_endian() const {
-  return std::get<sockaddr_in>(_addr).sin_addr.s_addr;
-}
-
-uint16_t InetAddress::port() const {
-  return sockets::network_to_host_16(port_net_enddian());
-}
 static __thread char t_resolveBuffer[64 * 1024];
-bool InetAddress::resolve(const char* hostname, InetAddress* result) {
+bool InetAddress::resolve(const std::string& hostname, InetAddress& result) {
   hostent hent;
   hostent* he = nullptr;
   int herrno = 0;
 
-  int ret = gethostbyname_r(hostname, &hent, t_resolveBuffer,
+  int ret = gethostbyname_r(hostname.c_str(), &hent, t_resolveBuffer,
                             sizeof(t_resolveBuffer), &he, &herrno);
   if (ret == 0 && he != nullptr) {
-    std::get<sockaddr_in>(result->_addr).sin_addr =
+    std::get<sockaddr_in>(result._addr).sin_addr =
         *(static_cast<in_addr*>(static_cast<void*>(he->h_addr)));
     return true;
   } else {
@@ -94,10 +56,5 @@ bool InetAddress::resolve(const char* hostname, InetAddress* result) {
       LOG_SYSERR << "InetAddress::resolve";
     }
     return false;
-  }
-}
-void InetAddress::set_scope_id(uint32_t scope_id) {
-  if (family() == AF_INET6) {
-    std::get<sockaddr_in6>(_addr).sin6_scope_id = scope_id;
   }
 }

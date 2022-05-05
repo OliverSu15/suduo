@@ -78,7 +78,7 @@ class Bench {
     printf("all %d threads started, %.3fms total, %.3fus per thread\n",
            numThreads, 1e3 * timeUsed, 1e6 * timeUsed / numThreads);
 
-    TimestampQueue::queue_type queue = start_.drain();
+    TimestampQueue::QueueType queue = start_.drain();
     if (g_verbose) {
       // for (const auto& [tid, ts] : queue)
       for (const auto& e : queue) {
@@ -98,7 +98,7 @@ class Bench {
     suduo::Timestamp t2 = suduo::Timestamp::now();
     printf("all %zd threads joined, %.3fms\n", threads_.size(),
            1e3 * ((t2 - stop).get_seconds_in_double()));
-    TimestampQueue::queue_type queue = done_.drain();
+    TimestampQueue::QueueType queue = done_.drain();
     if (g_verbose) {
       // for (const auto& [tid, ts] : queue)
       for (const auto& e : queue) {

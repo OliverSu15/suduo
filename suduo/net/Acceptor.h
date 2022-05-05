@@ -1,7 +1,5 @@
 #ifndef ACCEPTOR_H
 #define ACCEPTOR_H
-#include <functional>
-
 #include "suduo/base/noncopyable.h"
 #include "suduo/net/Channel.h"
 #include "suduo/net/Socket.h"
@@ -18,9 +16,8 @@ class Acceptor : noncopyable {
   ~Acceptor();
 
   void set_new_connection_callback(const NewConnectionCallback& cb) {
-    _callback = std::move(cb);
+    _callback = cb;
   }
-
   void listen();
 
   bool listening() const { return _listening; }
@@ -29,10 +26,14 @@ class Acceptor : noncopyable {
   void handle_read();
 
   EventLoop* _loop;
+
   Socket _accept_socket;
-  Channel _accept_Channel;
+  Channel _accept_channel;
+
   NewConnectionCallback _callback;
+
   bool _listening;
+
   int _idle_fd;
 };
 }  // namespace net

@@ -2,64 +2,40 @@
 
 #include <poll.h>
 
-#include <memory>
-#include <sstream>
-#include <string>
-
+#include "suduo/base/LogStream.h"
 #include "suduo/base/Logger.h"
 #include "suduo/net/EventLoop.h"
-// namespace suduo
+#include "suduo/net/Poller.h"
 using Channel = suduo::net::Channel;
-
-const int Channel::none_event = 0;
-const int Channel::read_event = POLLIN | POLLPRI;
-const int Channel::write_event = POLLOUT;
-
-Channel::Channel(EventLoop* loop, int fd)
-    : _loop(loop),
-      _fd(fd),
+Channel::Channel(const std::unique_ptr<Poller>& poller, int fd)
+    : _fd(fd),
+      _poller(poller),
       _events(0),
       _revents(0),
       _index(-1),
       _log_hup(true),
       _tied(false),
-      _event_handling(false),
-      _added_to_loop(false) {}
+      _event_handling(false) {}
 
 Channel::~Channel() {
-  if (_loop->is_in_loop_thread()) {
-  }
+  // if (_loop->is_in_loop_thread()) {
+  //   assert(!_loop->has_channel(this));
+  // }
 }
 
-void Channel::tie(const std::shared_ptr<void>& obj) {
-  _tie = obj;
-  _tied = true;
-}
-
-void Channel::update() {
-  _added_to_loop = true;
-  _loop->update_channel(this);
-}
-
-void Channel::remove() {
-  assert(is_none_event());
-  _added_to_loop = false;
-  _loop->remove_channel(this);
-}
-
-void Channel::handle_event(Timestamp receive_time) {
+void Channel::handle_event(const Timestamp& receivetime) {
   std::shared_ptr<void> guard;
   if (_tied) {
     guard = _tie.lock();
     if (guard) {
-      handle_event_with_guard(receive_time);
+      handle_event_with_guard(receivetime);
     }
   } else {
-    handle_event_with_guard(receive_time);
+    handle_event_with_guard(receivetime);
   }
 }
 
-void Channel::handle_event_with_guard(Timestamp receivetime) {
+void Channel::handle_event_with_guard(const Timestamp& receivetime) {
   _event_handling = true;
   LOG_TRACE << revents_to_string();
   if ((_revents & POLLHUP) && !(_revents & POLLIN)) {
@@ -85,6 +61,10 @@ void Channel::handle_event_with_guard(Timestamp receivetime) {
   _event_handling = false;
 }
 
+void Channel::update() { _poller->update_channel(this); }
+
+void Channel::remove() { _poller->remove_channel(this); }
+
 std::string Channel::revents_to_string() const {
   return events_to_string(_fd, _revents);
 }
@@ -94,7 +74,7 @@ std::string Channel::events_to_string() const {
 }
 
 std::string Channel::events_to_string(int fd, int ev) {
-  std::ostringstream oss;
+  LogStream oss;
   oss << fd << ": ";
   if (ev & POLLIN) oss << "IN ";
   if (ev & POLLPRI) oss << "PRI ";
@@ -104,5 +84,5 @@ std::string Channel::events_to_string(int fd, int ev) {
   if (ev & POLLERR) oss << "ERR ";
   if (ev & POLLNVAL) oss << "NVAL ";
 
-  return oss.str();
+  return {oss.buffer().data()};
 }

@@ -12,7 +12,7 @@ namespace suduo {
 template <typename T>
 class BlockingQueue : noncopyable {
  public:
-  using queue_type = std::deque<T>;
+  using QueueType = std::deque<T>;
   BlockingQueue() : _mutex(), _not_empty(_mutex), _queue() {}
 
   void push(const T& value) {
@@ -37,8 +37,8 @@ class BlockingQueue : noncopyable {
   }
 
   // TODO change the function name
-  queue_type drain() {
-    queue_type new_queue;
+  QueueType drain() {
+    QueueType new_queue;
     MutexLockGuard lock(_mutex);
     new_queue = std::move(_queue);
     return new_queue;
@@ -53,10 +53,16 @@ class BlockingQueue : noncopyable {
     return _queue.empty();
   }
 
+  void swap(BlockingQueue<T>& other) {
+    MutexLockGuard lock(_mutex);
+    _queue.swap(other._queue);
+    auto i = _queue.begin();
+  }
+
  private:
   mutable MutexLock _mutex;
   Condition _not_empty;
-  queue_type _queue;
+  QueueType _queue;
 };
 
 }  // namespace suduo

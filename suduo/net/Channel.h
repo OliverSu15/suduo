@@ -1,23 +1,26 @@
 #ifndef CHANNEL_H
 #define CHANNEL_H
+#include <poll.h>
+
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <utility>
 
 #include "suduo/base/Timestamp.h"
 #include "suduo/base/noncopyable.h"
 namespace suduo {
 namespace net {
 class EventLoop;
+class Poller;
 class Channel : noncopyable {
  public:
   using EventCallback = std::function<void()>;
   using ReadEventCallback = std::function<void(Timestamp)>;
-  Channel(EventLoop* loop, int fd);
+
+  Channel(const std::unique_ptr<Poller>& poller, int fd);
   ~Channel();
 
-  void handle_event(Timestamp receive_time);
+  void handle_event(const Timestamp& receivetime);
 
   void set_read_callback(ReadEventCallback cb) {
     _read_callback = std::move(cb);
@@ -26,12 +29,20 @@ class Channel : noncopyable {
   void set_close_callback(EventCallback cb) { _close_callback = std::move(cb); }
   void set_error_callback(EventCallback cb) { _error_callback = std::move(cb); }
 
-  void tie(const std::shared_ptr<void>&);
+  void tie(const std::shared_ptr<void>& obj) {
+    _tie = obj;
+    _tied = true;
+  }
 
+  // EventLoop* owner_loop() { return _loop; }
   int fd() const { return _fd; }
   int events() const { return _events; }
-  void set_revents(uint32_t revt) { _revents = revt; }
-  bool is_none_event() const { return _events == none_event; }
+  void set_revents(uint32_t recv) { _revents = recv; }
+  bool is_disable_all() const { return _events == none_event; }
+  bool is_writing() const { return _events & write_event; }
+  bool is_reading() const { return _events & read_event; }
+  void disable_log_hup() { _log_hup = false; }
+  void enable_log_hup() { _log_hup = true; }
 
   void enable_reading() {
     _events |= read_event;
@@ -54,39 +65,41 @@ class Channel : noncopyable {
     update();
   }
 
-  bool is_writing() const { return _events & write_event; }
-  bool is_reading() const { return _events & read_event; }
+  void remove();
+
+  string revents_to_string() const;
+  string events_to_string() const;
 
   int index() const { return _index; }
   void set_index(int pos) { _index = pos; }
 
-  std::string revents_to_string() const;
-  std::string events_to_string() const;
-
-  void do_not_log_hup() { _log_hup = false; }
-  EventLoop* owner_loop() { return _loop; }
-  void remove();
-
  private:
   static std::string events_to_string(int fd, int ev);
 
+  void handle_event_with_guard(const Timestamp& receivetime);
   void update();
-  void handle_event_with_guard(Timestamp receive_time);
-  static const int none_event;
-  static const int read_event;
-  static const int write_event;
 
-  EventLoop* _loop;
+  static const uint32_t none_event = 0;
+  static const uint32_t read_event = POLLIN | POLLPRI;
+  ;
+  static const uint32_t write_event = POLLOUT;
+  ;
+
+  // EventLoop* _loop;
+  const std::unique_ptr<Poller>& _poller;
   const int _fd;
-  int _events;
-  int _revents;
+
   int _index;
-  int _log_hup;
+
+  uint32_t _events;
+  uint32_t _revents;
+
+  bool _log_hup;
 
   std::weak_ptr<void> _tie;
   bool _tied;
+
   bool _event_handling;
-  bool _added_to_loop;
 
   ReadEventCallback _read_callback;
   EventCallback _write_callback;

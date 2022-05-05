@@ -67,7 +67,7 @@ class Logger {
   LogLevel _level;
   int _line;
 };
-
+const char* strerror_tl(int savedErrno);
 }  // namespace suduo
 #define LOG_TRACE                                         \
   if (suduo::Logger::log_level() <= suduo::Logger::TRACE) \

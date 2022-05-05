@@ -18,6 +18,11 @@
 // namespace suduo
 using Logger = suduo::Logger;
 namespace suduo {
+__thread char t_errnobuf[512];
+const char* strerror_tl(int savedErrno) {
+  return strerror_r(savedErrno, t_errnobuf, sizeof t_errnobuf);
+}
+
 __thread char thread_time[32];
 __thread time_t thread_lastSecond;
 

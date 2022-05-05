@@ -1,15 +1,11 @@
 #include "suduo/net/Connector.h"
 
-#include <cerrno>
-
 #include "suduo/base/Logger.h"
 #include "suduo/net/Channel.h"
 #include "suduo/net/EventLoop.h"
 #include "suduo/net/SocketOpt.h"
 
 using Connector = suduo::net::Connector;
-using namespace suduo::net;
-using namespace suduo;
 
 const int Connector::MAX_RETRY_DELAY_MS = 30 * 1000;
 const int Connector::INIT_RETRY_DELAY_MS = 500;
@@ -71,7 +67,6 @@ void Connector::connect() {
     case EISCONN:
       connecting(sock_fd);
       break;
-
     case EAGAIN:
     case EADDRINUSE:
     case EADDRNOTAVAIL:
@@ -79,7 +74,6 @@ void Connector::connect() {
     case ENETUNREACH:
       retry(sock_fd);
       break;
-
     case EACCES:
     case EPERM:
     case EAFNOSUPPORT:
@@ -90,12 +84,10 @@ void Connector::connect() {
       LOG_SYSERR << "connect error in Connector::startInLoop " << saved_errno;
       sockets::close(sock_fd);
       break;
-
     default:
       LOG_SYSERR << "Unexpected error in Connector::startInLoop "
                  << saved_errno;
       sockets::close(sock_fd);
-      // connectErrorCallback_();
       break;
   }
 }
@@ -111,7 +103,7 @@ void Connector::restart() {
 void Connector::connecting(int sockfd) {
   set_state(Connecting);
   assert(!_channel);
-  _channel.reset(new Channel(_loop, sockfd));
+  _channel.reset(new Channel(_loop->poller(), sockfd));
   _channel->set_write_callback(std::bind(&Connector::handle_write, this));
   _channel->set_error_callback(std::bind(&Connector::handle_error, this));
 
@@ -134,9 +126,8 @@ void Connector::handle_write() {
     int sock_fd = remove_and_reset_channel();
     int err = sockets::get_socket_error(sock_fd);
     if (err) {
-      // TODO fix it
-      //  LOG_WARN << "Connector::handleWrite - SO_ERROR = " << err << " "
-      //           << strerror_tl(err);
+      LOG_WARN << "Connector::handleWrite - SO_ERROR = " << err << " "
+               << strerror_tl(err);
       retry(sock_fd);
     } else if (sockets::is_self_connect(sock_fd)) {
       LOG_WARN << "Connector::handleWrite - Self connect";
@@ -159,8 +150,7 @@ void Connector::handle_error() {
   if (_state == Connecting) {
     int sock_fd = remove_and_reset_channel();
     int err = sockets::get_socket_error(sock_fd);
-    // TODO fix it
-    // LOG_TRACE << "SO_ERROR = " << err << " " << strerror_tl(err);
+    LOG_TRACE << "SO_ERROR = " << err << " " << strerror_tl(err);
     retry(sock_fd);
   }
 }
