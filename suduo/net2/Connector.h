@@ -30,8 +30,8 @@ class Connector : noncopyable, public std::enable_shared_from_this<Connector> {
  private:
   enum State { Disconnected, Connecting, Connected };
 
-  static const int MAX_RETRY_DELAY_MS = 30 * 1000;
-  static const int INIT_RETRY_DELAY_MS = 500;
+  static const int MAX_RETRY_DELAY_MS;
+  static const int INIT_RETRY_DELAY_MS;
 
   void set_state(State s) { _state = s; }
 

@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(testInet6Address) {
 
 BOOST_AUTO_TEST_CASE(testInetAddressResolve) {
   InetAddress addr(80);
-  if (InetAddress::resolve("google.com", &addr)) {
+  if (InetAddress::resolve("google.com", addr)) {
     LOG_INFO << "google.com resolved to " << addr.to_Ip_port();
   } else {
     LOG_ERROR << "Unable to resolve google.com";

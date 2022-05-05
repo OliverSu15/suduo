@@ -14,6 +14,25 @@
 using namespace suduo;
 using namespace suduo::net;
 
+void read_timer_fds(int timer_fd, const Timestamp& now) {
+  uint64_t how_many;
+  ssize_t n = read(timer_fd, &how_many, sizeof(how_many));
+  LOG_TRACE << "TimerQueue::handleRead() " << how_many << " at "
+            << now.to_string();
+  if (n != sizeof(how_many)) {
+    LOG_ERROR << "TimerQueue::handleRead() reads " << n
+              << " bytes instead of 8";
+  }
+}
+
+int create_timer_fds() {
+  int timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+  if (timer_fd < 0) {
+    LOG_SYSFATAL << "Failed in timerfd_create";
+  }
+  return timer_fd;
+}
+
 void print(const char* msg) {
   static std::map<const char*, Timestamp> lasts;
   Timestamp& last = lasts[msg];
@@ -24,22 +43,22 @@ void print(const char* msg) {
   last = now;
 }
 
-namespace suduo {
-namespace net {
-namespace detail {
-int create_timer_fd();
-void read_timer_fd(int timerfd, Timestamp now);
-}  // namespace detail
-}  // namespace net
-}  // namespace suduo
+// namespace suduo {
+// namespace net {
+// namespace detail {
+// int create_timer_fd();
+// void read_timer_fd(int timerfd, Timestamp now);
+// }  // namespace detail
+// }  // namespace net
+// }  // namespace suduo
 
 // Use relative time, immunized to wall clock changes.
 class PeriodicTimer {
  public:
   PeriodicTimer(EventLoop* loop, double interval, const TimerCallback& cb)
       : loop_(loop),
-        timerfd_(suduo::net::detail::create_timer_fd()),
-        timerfdChannel_(loop, timerfd_),
+        timerfd_(create_timer_fds()),
+        timerfdChannel_(loop->poller(), timerfd_),
         interval_(interval),
         cb_(cb) {
     timerfdChannel_.set_read_callback(
@@ -67,7 +86,7 @@ class PeriodicTimer {
  private:
   void handleRead() {
     loop_->assert_in_loop_thread();
-    suduo::net::detail::read_timer_fd(timerfd_, Timestamp::now());
+    read_timer_fds(timerfd_, Timestamp::now());
     if (cb_) cb_();
   }
 

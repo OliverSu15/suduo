@@ -7,6 +7,9 @@
 
 using Connector = suduo::net::Connector;
 
+const int Connector::MAX_RETRY_DELAY_MS = 30 * 1000;
+const int Connector::INIT_RETRY_DELAY_MS = 500;
+
 Connector::Connector(EventLoop* loop, const InetAddress& server_addr)
     : _loop(loop),
       _server_addr(server_addr),
@@ -114,6 +117,8 @@ int Connector::remove_and_reset_channel() {
   _loop->queue_in_loop(std::bind(&Connector::reset_channel, this));
   return sock_fd;
 }
+
+void Connector::reset_channel() { _channel.reset(); }
 
 void Connector::handle_write() {
   LOG_TRACE << "Connector::handleWrite " << _state;

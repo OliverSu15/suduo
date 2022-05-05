@@ -19,9 +19,10 @@ class EchoServer {
   EchoServer(EventLoop* loop, const InetAddress& listenAddr)
       : loop_(loop), server_(loop, listenAddr, "EchoServer") {
     server_.set_connection_callback(
-        std::bind(&EchoServer::onConnection, this, _1));
+        std::bind(&EchoServer::onConnection, this, std::placeholders::_1));
     server_.set_message_callback(
-        std::bind(&EchoServer::onMessage, this, _1, _2, _3));
+        std::bind(&EchoServer::onMessage, this, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3));
     server_.set_thread_num(numThreads);
   }
 

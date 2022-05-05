@@ -7,6 +7,7 @@
 #include <variant>
 
 #include "suduo/base/copyable.h"
+#include "suduo/net2/Endian.h"
 #include "suduo/net2/SocketOpt.h"
 namespace suduo {
 namespace net {
@@ -35,6 +36,16 @@ class InetAddress : public copyable {
     sockets::to_Ip_port(buf.data(), buf.size(), get_sock_addr());
     return buf.data();
   }
+  uint16_t port() const {
+    return sockets::network_to_host_16(port_net_enddian());
+  }
+
+  uint32_t port_net_enddian() const {
+    if (_addr.index() == 0) {
+      return std::get<sockaddr_in>(_addr).sin_port;
+    }
+    return std::get<sockaddr_in6>(_addr).sin6_port;
+  };
 
   const sockaddr* get_sock_addr() const {
     if (_addr.index() == 0) {
