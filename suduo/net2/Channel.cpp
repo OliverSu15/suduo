@@ -7,9 +7,8 @@
 #include "suduo/net/Poller.h"
 #include "suduo/net2/EventLoop.h"
 using Channel = suduo::net::Channel;
-Channel::Channel(EventLoop* loop, int fd, Poller* poller)
-    : _loop(loop),
-      _fd(fd),
+Channel::Channel(const std::unique_ptr<Poller>& poller, int fd)
+    : _fd(fd),
       _poller(poller),
       _events(0),
       _revents(0),
@@ -19,9 +18,9 @@ Channel::Channel(EventLoop* loop, int fd, Poller* poller)
       _event_handling(false) {}
 
 Channel::~Channel() {
-  if (_loop->is_in_loop_thread()) {
-    assert(!_loop->has_channel(this));
-  }
+  // if (_loop->is_in_loop_thread()) {
+  //   assert(!_loop->has_channel(this));
+  // }
 }
 
 void Channel::handle_event(const Timestamp& receivetime) {

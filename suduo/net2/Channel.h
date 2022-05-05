@@ -17,7 +17,7 @@ class Channel : noncopyable {
   using EventCallback = std::function<void()>;
   using ReadEventCallback = std::function<void(Timestamp)>;
 
-  Channel(EventLoop* loop, int fd, Poller* poller);
+  Channel(const std::unique_ptr<Poller>& poller, int fd);
   ~Channel();
 
   void handle_event(const Timestamp& receivetime);
@@ -34,7 +34,7 @@ class Channel : noncopyable {
     _tied = true;
   }
 
-  EventLoop* owner_loop() { return _loop; }
+  // EventLoop* owner_loop() { return _loop; }
   int fd() const { return _fd; }
   int events() const { return _events; }
   void set_revents(uint32_t recv) { _revents = recv; }
@@ -85,8 +85,8 @@ class Channel : noncopyable {
   static const uint32_t write_event = POLLOUT;
   ;
 
-  EventLoop* _loop;
-  Poller* _poller;
+  // EventLoop* _loop;
+  const std::unique_ptr<Poller>& _poller;
   const int _fd;
 
   int _index;
