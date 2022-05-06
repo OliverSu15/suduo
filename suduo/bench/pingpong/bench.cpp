@@ -117,13 +117,16 @@ int main(int argc, char* argv[]) {
   }
   double first_count = 0;
   double second_count = 0;
-  for (int i = 0; i < 250; ++i) {
+  for (int i = 0; i < 25; ++i) {
+    printf("%d times", i);
     std::pair<int, int> t = runOnce();
-    first_count += t.first;
-    second_count += t.second;
+    if (i != 0) {
+      first_count += t.first;
+      second_count += t.second;
+    }
     printf("%8d %8d\n", t.first, t.second);
   }
-  printf("AVG:%f %f\n", first_count / 25.0, second_count / 25.0);
+  printf("AVG:%f %f\n", first_count / 24, second_count / 24);
 
   for (const auto& channel : g_channels) {
     channel->disable_all();
