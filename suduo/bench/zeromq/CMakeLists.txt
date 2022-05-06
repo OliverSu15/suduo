@@ -1,0 +1,6 @@
+add_executable(zeromq_local_lat local_lat.cpp)
+target_link_libraries(zeromq_local_lat suduo_net)
+
+add_executable(zeromq_remote_lat remote_lat.cpp)
+target_link_libraries(zeromq_remote_lat suduo_net)
+
