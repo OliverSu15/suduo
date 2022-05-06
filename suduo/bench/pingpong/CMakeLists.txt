@@ -1,0 +1,2 @@
+add_executable(pingpong_bench bench.cpp)
+target_link_libraries(pingpong_bench suduo_net)

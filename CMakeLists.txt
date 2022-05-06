@@ -51,3 +51,4 @@ message(STATUS "CXX_FLAGS = " ${CMAKE_CXX_FLAGS} " " ${CMAKE_CXX_FLAGS_${BUILD_T
 add_subdirectory(suduo/base)
 # add_subdirectory(suduo/net)
 add_subdirectory(suduo/net)
+add_subdirectory(suduo/bench)
