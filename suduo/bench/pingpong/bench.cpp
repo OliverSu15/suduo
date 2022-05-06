@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <cstdint>
 #include <functional>
 
 #include "suduo/base/Logger.h"
@@ -114,11 +115,15 @@ int main(int argc, char* argv[]) {
     Channel* channel = new Channel(loop.poller(), g_pipes[i * 2]);
     g_channels.emplace_back(channel);
   }
-
-  for (int i = 0; i < 25; ++i) {
+  double first_count = 0;
+  double second_count = 0;
+  for (int i = 0; i < 250; ++i) {
     std::pair<int, int> t = runOnce();
+    first_count += t.first;
+    second_count += t.second;
     printf("%8d %8d\n", t.first, t.second);
   }
+  printf("AVG:%f %f\n", first_count / 25.0, second_count / 25.0);
 
   for (const auto& channel : g_channels) {
     channel->disable_all();
