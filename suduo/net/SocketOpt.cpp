@@ -78,6 +78,7 @@ int sockets::get_socket_error(int sockfd) {
   socklen_t optlen = sizeof(optval);
   if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0) {
     LOG_SYSFATAL << "sockets::get_socket_error";
+    return -1;
   } else {
     return optval;
   }
